@@ -35,15 +35,6 @@ class Name(BaseModel):
     patronymic: _NameItem | None = None
 
 
-class Username(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    value: Annotated[str, StringConstraints(min_length=3, max_length=32)]
-
-    def __str__(self) -> str:
-        return self.value
-
-
 class Email(BaseModel):
     model_config = ConfigDict(frozen=True)
 
