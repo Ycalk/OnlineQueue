@@ -34,3 +34,6 @@ dev = [
     "pytest-asyncio (>=1.2.0,<2.0.0)",
     "aiosqlite (>=0.21.0,<0.22.0)"
 ]
+
+[tool.poetry.scripts]
+core = "core:run"

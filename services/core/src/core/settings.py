@@ -1,6 +1,6 @@
 import secrets
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import model_validator
+from pydantic import model_validator, field_validator
 from typing import Self
 
 
@@ -25,9 +25,14 @@ class Settings(BaseSettings):
     max_overflow: int = 20
 
     app_name: str = "Queue Management System"
-    api_prefix: str = "/api/v1"
+    api_prefix: str = "/api"
+
+    @property
+    def methods_prefix(self) -> str:
+        return f"{self.api_prefix}/v1"
 
     secret_key: str | None = None
+    api_port: int = 8080
 
     @model_validator(mode="after")
     def validate_production_requirements(self) -> Self:
@@ -53,14 +58,22 @@ class Settings(BaseSettings):
                 )
 
         else:
-            if not self.secret_key:
-                self.secret_key = secrets.token_urlsafe(32)
-                print(f"⚠️  DEBUG MODE: Generated secret key: {self.secret_key}")
-
-            if not self.postgres_host:
-                print("⚠️  DEBUG MODE: Using in-memory SQLite database")
+            print("⚠️  DEBUG MODE: Using in-memory SQLite database")
 
         return self
+
+    @field_validator("secret_key", mode="before")
+    @classmethod
+    def generate_secret_key_in_debug(cls, value: str | None, info) -> str:
+        if value is not None:
+            return value
+
+        if info.data.get("debug", False):
+            generated = secrets.token_urlsafe(32)
+            print(f"⚠️  DEBUG MODE: Generated secret key: {generated}")
+            return generated
+
+        raise ValueError("SECRET_KEY is required in production mode")
 
 
 settings = Settings()  # type: ignore
