@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     postgres_db: str | None = None
     postgres_user: str | None = None
     postgres_password: str | None = None
-    
+
     pool_size: int = 10
     max_overflow: int = 20
 

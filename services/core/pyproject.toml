@@ -10,7 +10,11 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard] (>=0.119.0,<0.120.0)",
     "email-validator (>=2.3.0,<3.0.0)",
-    "bcrypt (>=5.0.0,<6.0.0)"
+    "bcrypt (>=5.0.0,<6.0.0)",
+    "sqlalchemy[asyncio] (>=2.0.44,<3.0.0)",
+    "asyncpg (>=0.30.0,<0.31.0)",
+    "pydantic-settings (>=2.11.0,<3.0.0)",
+    "dishka[fastapi] (>=1.7.2,<2.0.0)"
 ]
 
 [tool.poetry]
@@ -23,3 +27,10 @@ packages = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "alembic (>=1.17.0,<2.0.0)",
+    "pytest-asyncio (>=1.2.0,<2.0.0)",
+    "aiosqlite (>=0.21.0,<0.22.0)"
+]
