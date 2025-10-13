@@ -1,5 +1,5 @@
 from abc import ABC
-from .domain_event import DomainEvent
+from .event import DomainEvent
 from dataclasses import dataclass, field
 
 

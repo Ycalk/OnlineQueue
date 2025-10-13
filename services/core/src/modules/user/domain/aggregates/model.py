@@ -42,6 +42,8 @@ class User(AggregateRoot):
     def change_password(self, old_password: str, new_password: str) -> None:
         if not self.hashed_password.verify(old_password):
             raise InvalidPasswordError("Invalid password")
+        if len(new_password) < 8:
+            raise WeakPasswordError("Password must be at least 8 characters long")
 
         self.hashed_password = HashedPassword.from_plain_password(new_password)
         self._add_event(PasswordChanged(user_id=self.id, email=self.email))
