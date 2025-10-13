@@ -10,6 +10,7 @@ from shared.providers import (
     LoggingProvider,
     UserProvider,
 )
+from modules.user.adapters.inbound.rest import auth_router
 
 
 @asynccontextmanager
@@ -35,3 +36,6 @@ container = make_async_container(
 )
 
 setup_dishka(container=container, app=app)
+
+
+app.include_router(auth_router, prefix=settings.api_prefix)

@@ -1,7 +1,7 @@
 import secrets
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator, field_validator
-from typing import Self
+from typing import Self, Final
 
 
 class Settings(BaseSettings):
@@ -26,13 +26,17 @@ class Settings(BaseSettings):
 
     app_name: str = "Queue Management System"
     api_prefix: str = "/api"
+    api_port: int = 8080
 
     @property
     def methods_prefix(self) -> str:
         return f"{self.api_prefix}/v1"
 
     secret_key: str | None = None
-    api_port: int = 8080
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
+    encoding_algorithm: str = "HS256"
+    refresh_token_cookie_name: str = "refresh_token"
 
     @model_validator(mode="after")
     def validate_production_requirements(self) -> Self:
@@ -76,4 +80,4 @@ class Settings(BaseSettings):
         raise ValueError("SECRET_KEY is required in production mode")
 
 
-settings = Settings()  # type: ignore
+settings: Final[Settings] = Settings()  # type: ignore
