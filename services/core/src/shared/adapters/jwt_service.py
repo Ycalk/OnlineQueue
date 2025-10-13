@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timedelta
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel
 from uuid import UUID
 from enum import StrEnum
 from core.settings import settings
@@ -16,10 +16,6 @@ class TokenPayload(BaseModel):
     exp: int
     iat: int
     type: TokenType
-
-    @field_serializer("sub")
-    def serialize_uuid(self, value: UUID) -> str:
-        return str(value)
 
 
 class InvalidTokenError(Exception):
@@ -44,7 +40,7 @@ class JWTService:
         )
 
         return jwt.encode(
-            payload.model_dump(),
+            payload.model_dump(mode="json"),
             settings.secret_key,
             algorithm=settings.encoding_algorithm,
         )
@@ -62,7 +58,7 @@ class JWTService:
         )
 
         return jwt.encode(
-            payload.model_dump(),
+            payload.model_dump(mode="json"),
             settings.secret_key,
             algorithm=settings.encoding_algorithm,
         )

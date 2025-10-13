@@ -7,4 +7,4 @@ class InMemoryEventPublisher(IEventPublisher):
         self.logger = logger
 
     async def publish(self, event: DomainEvent):
-        self.logger.debug(f"Publishing event: {event}")
+        self.logger.info(f"Publishing event {event.__class__.__name__}: {event}")

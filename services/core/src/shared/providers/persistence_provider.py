@@ -17,7 +17,6 @@ class PersistenceProvider(Provider):
         if settings.debug:
             engine = create_async_engine(
                 DATABASE_URL,
-                echo=True,
                 connect_args={"check_same_thread": False},
                 poolclass=None,
             )

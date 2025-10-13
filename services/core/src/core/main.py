@@ -11,6 +11,7 @@ from shared.providers import (
     UserProvider,
 )
 from modules.user.adapters.inbound.rest import auth_router
+from shared.logging import setup_logging
 
 
 @asynccontextmanager
@@ -18,6 +19,8 @@ async def lifespan(app: FastAPI):
     yield
     await app.state.dishka_container.close()
 
+
+setup_logging()
 
 app = FastAPI(
     title=settings.app_name,
