@@ -2,7 +2,11 @@ import bcrypt
 from pydantic import BaseModel, ConfigDict
 from pydantic.types import StringConstraints
 from pydantic import EmailStr
-from typing import Annotated, Self
+from typing import Annotated, Self, Final
+from modules.user.domain.errors import WeakPasswordError
+
+
+MINIMAL_PASSWORD_LENGTH: Final[int] = 8
 
 
 class HashedPassword(BaseModel):
@@ -12,6 +16,10 @@ class HashedPassword(BaseModel):
 
     @classmethod
     def from_plain_password(cls, from_plain_password: str) -> Self:
+        if len(from_plain_password) < MINIMAL_PASSWORD_LENGTH:
+            raise WeakPasswordError(
+                f"Password must be at least {MINIMAL_PASSWORD_LENGTH} characters long"
+            )
         return cls(
             value=bcrypt.hashpw(
                 from_plain_password.encode("utf-8"), bcrypt.gensalt()

@@ -23,6 +23,6 @@ class UserId(BaseModel):
         return hash(self.value)
 
     def __eq__(self, value: object) -> bool:
-        if not isinstance(value, UserId):
+        if not isinstance(value, "UserId"):
             return False
         return self.value == value.value

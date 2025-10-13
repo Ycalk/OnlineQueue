@@ -9,7 +9,7 @@ from modules.user.domain.events import (
     EmailChanged,
     NameChanged,
 )
-from modules.user.domain.errors import WeakPasswordError, InvalidPasswordError
+from modules.user.domain.errors import InvalidPasswordError
 from typing import Self
 
 
@@ -22,8 +22,6 @@ class User(AggregateRoot):
 
     @classmethod
     def register(cls, email: Email, name: Name, plain_password: str) -> Self:
-        if len(plain_password) < 8:
-            raise WeakPasswordError("Password must be at least 8 characters long")
         user = cls(
             id=UserId(),
             email=email,
@@ -42,8 +40,6 @@ class User(AggregateRoot):
     def change_password(self, old_password: str, new_password: str) -> None:
         if not self.hashed_password.verify(old_password):
             raise InvalidPasswordError("Invalid password")
-        if len(new_password) < 8:
-            raise WeakPasswordError("Password must be at least 8 characters long")
 
         self.hashed_password = HashedPassword.from_plain_password(new_password)
         self._add_event(PasswordChanged(user_id=self.id, email=self.email))
