@@ -11,7 +11,7 @@ from core.settings import settings
 from shared.persistence.utils import Base
 
 
-class DatabaseProvider(Provider):
+class PersistenceProvider(Provider):
     @provide(scope=Scope.APP)
     async def get_engine(self) -> AsyncIterable[AsyncEngine]:
         if settings.debug:
