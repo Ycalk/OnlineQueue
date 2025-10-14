@@ -1,6 +1,5 @@
 from .in_memory_publisher import InMemoryEventPublisher
-from .jwt_service import TokenType, InvalidTokenError, TokenExpiredError, JWTService
-from .http_error import HTTPError
+from .rest import TokenType, InvalidTokenError, TokenExpiredError, JWTService, HTTPError
 
 
 __all__ = [
