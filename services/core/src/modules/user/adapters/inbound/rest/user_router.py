@@ -1,4 +1,7 @@
+from functools import wraps
+from typing import Callable
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from modules.user.domain.ports.inbound.use_cases import (
     IChangeEmail,
@@ -36,6 +39,33 @@ router = APIRouter(
 )
 
 
+def handle_user_errors(func: Callable):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except InvalidPasswordError as e:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        except WeakPasswordError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+        except SamePasswordError:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except SameEmailError:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except UserNotFoundError as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        except UserAlreadyExistsError as e:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(e),
+            )
+
+    return wrapper
+
+
 @router.patch(
     "/email",
     response_model=MessageResponse,
@@ -44,8 +74,7 @@ router = APIRouter(
             "model": HTTPError,
             "description": "Неверный пароль",
         },
-        status.HTTP_400_BAD_REQUEST: {
-            "model": HTTPError,
+        status.HTTP_204_NO_CONTENT: {
             "description": "Новый email должен отличаться от старого",
         },
         status.HTTP_409_CONFLICT: {
@@ -54,6 +83,7 @@ router = APIRouter(
         },
     },
 )
+@handle_user_errors
 async def update_email(
     request: UpdateEmailRequest,
     change_email_uc: FromDishka[IChangeEmail],
@@ -62,38 +92,19 @@ async def update_email(
     """
     Изменить email текущего пользователя
     """
-    try:
-        command = ChangeEmail(
-            user_id=current_user_id,
-            new_email=Email(value=request.new_email),
-            password=request.current_password,
-        )
+    command = ChangeEmail(
+        user_id=current_user_id,
+        new_email=Email(value=request.new_email),
+        password=request.current_password,
+    )
 
-        await change_email_uc(command)
+    await change_email_uc(command)
 
-        return MessageResponse(message="Email updated successfully")
-
-    except InvalidPasswordError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid password"
-        )
-    except SameEmailError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New email must be different from old email",
-        )
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this email already exists",
-        )
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+    return MessageResponse(message="Email updated successfully")
 
 
 @router.patch("/name", response_model=MessageResponse)
+@handle_user_errors
 async def update_name(
     request: UpdateNameRequest,
     change_name_uc: FromDishka[IChangeName],
@@ -102,22 +113,17 @@ async def update_name(
     """
     Изменить имя текущего пользователя
     """
-    try:
-        command = ChangeName(
-            user_id=current_user_id,
-            new_first_name=request.first_name,
-            new_last_name=request.last_name,
-            new_patronymic=request.patronymic,
-        )
 
-        await change_name_uc(command)
+    command = ChangeName(
+        user_id=current_user_id,
+        new_first_name=request.first_name,
+        new_last_name=request.last_name,
+        new_patronymic=request.patronymic,
+    )
 
-        return MessageResponse(message="Name updated successfully")
+    await change_name_uc(command)
 
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+    return MessageResponse(message="Name updated successfully")
 
 
 @router.patch(
@@ -128,16 +134,16 @@ async def update_name(
             "model": HTTPError,
             "description": "Неверный текущий пароль",
         },
-        status.HTTP_400_BAD_REQUEST: {
-            "model": HTTPError,
+        status.HTTP_204_NO_CONTENT: {
             "description": "Новый пароль должен отличаться от старого",
         },
-        status.HTTP_409_CONFLICT: {
+        status.HTTP_400_BAD_REQUEST: {
             "model": HTTPError,
             "description": "Новый пароль слишком слабый",
         },
     },
 )
+@handle_user_errors
 async def update_password(
     request: UpdatePasswordRequest,
     change_password_uc: FromDishka[IChangePassword],
@@ -146,27 +152,12 @@ async def update_password(
     """
     Изменить пароль текущего пользователя
     """
-    try:
-        command = ChangePassword(
-            user_id=current_user_id,
-            old_password=request.old_password,
-            new_password=request.new_password,
-        )
+    command = ChangePassword(
+        user_id=current_user_id,
+        old_password=request.old_password,
+        new_password=request.new_password,
+    )
 
-        await change_password_uc(command)
+    await change_password_uc(command)
 
-        return MessageResponse(message="Password updated successfully")
-
-    except InvalidPasswordError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid current password"
-        )
-    except SamePasswordError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New password must be different from old password",
-        )
-    except WeakPasswordError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Password is too weak"
-        )
+    return MessageResponse(message="Password updated successfully")
