@@ -10,7 +10,7 @@ from shared.providers import (
     LoggingProvider,
     UserProvider,
 )
-from modules.user.adapters.inbound.rest import auth_router
+from modules.user.adapters.inbound.rest import auth_router, user_router
 from shared.logging import setup_logging
 
 
@@ -42,3 +42,4 @@ setup_dishka(container=container, app=app)
 
 
 app.include_router(auth_router, prefix=settings.api_prefix)
+app.include_router(user_router, prefix=settings.api_prefix)

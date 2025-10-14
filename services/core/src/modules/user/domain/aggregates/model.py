@@ -9,7 +9,11 @@ from modules.user.domain.events import (
     EmailChanged,
     NameChanged,
 )
-from modules.user.domain.errors import InvalidPasswordError
+from modules.user.domain.errors import (
+    InvalidPasswordError,
+    SamePasswordError,
+    SameEmailError,
+)
 from typing import Self
 
 
@@ -41,10 +45,19 @@ class User(AggregateRoot):
         if not self.hashed_password.verify(old_password):
             raise InvalidPasswordError("Invalid password")
 
+        if old_password == new_password:
+            raise SamePasswordError("New password must be different from old password")
+
         self.hashed_password = HashedPassword.from_plain_password(new_password)
         self._add_event(PasswordChanged(user_id=self.id, email=self.email))
 
-    def change_email(self, new_email: Email) -> None:
+    def change_email(self, new_email: Email, password: str) -> None:
+        if not self.hashed_password.verify(password):
+            raise InvalidPasswordError("Invalid password")
+
+        if new_email == self.email:
+            raise SameEmailError("New email must be different from old email")
+
         event = EmailChanged(user_id=self.id, new_email=new_email, old_email=self.email)
         self.email = new_email
         self._add_event(event)

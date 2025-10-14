@@ -17,6 +17,6 @@ class ChangeEmail(ApplicationUseCase, IChangeEmail):
         user = await self._user_repository.find_by_id(command.user_id)
         if user is None:
             raise UserNotFoundError(f"User with id {command.user_id} not found")
-        user.change_email(command.new_email)
+        user.change_email(command.new_email, command.password)
         await self._user_repository.save(user)
         await self._publish_events(user)
