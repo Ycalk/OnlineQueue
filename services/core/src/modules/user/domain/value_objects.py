@@ -1,7 +1,6 @@
 import bcrypt
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator, EmailStr
 from pydantic.types import StringConstraints
-from pydantic import EmailStr
 from typing import Annotated, Self, Final
 from modules.user.domain.errors import WeakPasswordError
 
@@ -32,7 +31,9 @@ class HashedPassword(BaseModel):
         )
 
 
-_NameItem = Annotated[str, StringConstraints(min_length=1, max_length=100)]
+_NameItem = Annotated[
+    str, StringConstraints(min_length=1, max_length=100, strip_whitespace=True)
+]
 
 
 class Name(BaseModel):
@@ -47,6 +48,11 @@ class Email(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     value: EmailStr
+
+    @field_validator("value")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.lower()
 
     def __str__(self) -> str:
         return self.value
