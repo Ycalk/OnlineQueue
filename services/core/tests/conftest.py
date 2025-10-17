@@ -11,7 +11,7 @@ from shared.persistence.utils import Base
 
 
 @pytest_asyncio.fixture(scope="function")
-async def session() -> AsyncGenerator[AsyncSession]:
+async def session() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
