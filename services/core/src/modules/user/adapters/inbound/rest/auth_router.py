@@ -11,9 +11,10 @@ from shared.adapters import (
     TokenExpiredError,
     TokenType,
     HTTPError,
+    MessageResponse,
 )
 from core.settings import settings
-from .dto import RegisterRequest, LoginRequest, TokenResponse, MessageResponse
+from .dto import RegisterRequest, LoginRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"], route_class=DishkaRoute)
 
@@ -123,7 +124,10 @@ async def login(
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             "model": HTTPError,
-            "description": "Refresh токена нет в куках / невалиден / истек. После этого нужно залогиниться заново",
+            "description": (
+                "Refresh токена нет в куках / невалиден / истек. "
+                "После этого нужно залогиниться заново"
+            ),
         }
     },
 )

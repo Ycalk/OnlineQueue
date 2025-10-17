@@ -17,7 +17,7 @@ class UserRepository(IUserRepository):
         user_model = self._to_orm(user)
 
         try:
-            self._session.add(user_model)
+            await self._session.merge(user_model)
             await self._session.flush()
         except IntegrityError as e:
             if "unique" in str(e).lower() and "email" in str(e).lower():
