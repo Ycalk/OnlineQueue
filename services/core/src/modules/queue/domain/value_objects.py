@@ -1,13 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.types import StringConstraints, PositiveInt
 from typing import Annotated
-from modules.user.domain.aggregates import UserId
-
-
-class OwnerId(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    value: UserId
 
 
 class Name(BaseModel):
@@ -27,7 +20,7 @@ class Description(BaseModel):
     ]
 
 
-class Active(BaseModel):
+class IsActive(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     value: bool

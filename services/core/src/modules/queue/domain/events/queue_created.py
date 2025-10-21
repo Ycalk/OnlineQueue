@@ -1,18 +1,18 @@
 from shared.building_blocks import DomainEvent
 from modules.queue.domain.value_objects import (
-    OwnerId,
     Name,
     Description,
     SlotDuration,
     CleanupPeriod,
 )
 from modules.queue.domain.aggregates import QueueId
+from modules.queue.domain.entities import User
 
 
 class QueueCreated(DomainEvent):
     queue_id: QueueId
-    owner_id: OwnerId
+    owner: User
     name: Name
     description: Description
-    slot_duration: SlotDuration
+    max_slot_duration: SlotDuration
     cleanup_period: CleanupPeriod
