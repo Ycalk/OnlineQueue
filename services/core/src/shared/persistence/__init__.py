@@ -1,5 +1,5 @@
-from .models import User, TelegramUser
-from .utils import DATABASE_URL
+from .utils import DATABASE_URL, Base
+from .register_models import register_models
 
 
-__all__ = ["User", "TelegramUser", "DATABASE_URL"]
+__all__ = ["DATABASE_URL", "register_models", "Base"]
