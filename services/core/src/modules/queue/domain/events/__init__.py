@@ -5,6 +5,7 @@ from .name_changed import NameChanged
 from .request_archived import RequestArchived
 from .queue_activated import QueueActivated
 from .queue_deactivated import QueueDeactivated
+from .queue_cleaned_up import QueueCleanedUp
 
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "RequestArchived",
     "QueueActivated",
     "QueueDeactivated",
+    "QueueCleanedUp",
 ]

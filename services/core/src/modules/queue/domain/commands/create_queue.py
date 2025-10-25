@@ -1,17 +1,13 @@
-from shared.building_blocks import DomainEvent
+from ._base import BaseCommand
 from modules.queue.domain.value_objects import (
     Name,
     Description,
-    TimePeriod,
     CleanupPeriod,
-    UserId,
+    TimePeriod,
 )
-from modules.queue.domain.aggregates import QueueId
 
 
-class QueueCreated(DomainEvent):
-    queue_id: QueueId
-    owner: UserId
+class CreateQueue(BaseCommand):
     name: Name
     description: Description
     cleanup_period: CleanupPeriod

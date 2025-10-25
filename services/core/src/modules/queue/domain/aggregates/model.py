@@ -9,8 +9,9 @@ from modules.queue.domain.value_objects import (
     CleanupPeriod,
     TimePeriod,
     RequestStatus,
+    UserId,
 )
-from modules.queue.domain.entities import User, Request
+from modules.queue.domain.entities import Request
 from modules.queue.domain.events import (
     QueueCreated,
     NameChanged,
@@ -19,6 +20,7 @@ from modules.queue.domain.events import (
     QueueActivated,
     QueueDeactivated,
     RequestArchived,
+    QueueCleanedUp,
 )
 from shared.building_blocks import AggregateRoot
 from modules.queue.domain.errors import (
@@ -30,7 +32,7 @@ from modules.queue.domain.errors import (
 @dataclass
 class Queue(AggregateRoot):
     id: QueueId
-    owner: User
+    owner: UserId
     name: Name
     description: Description
     cleanup_period: CleanupPeriod
@@ -41,7 +43,7 @@ class Queue(AggregateRoot):
     @classmethod
     def create(
         cls,
-        owner: User,
+        owner: UserId,
         name: Name,
         description: Description,
         cleanup_period: CleanupPeriod,
@@ -115,6 +117,8 @@ class Queue(AggregateRoot):
             ):
                 request.archive()
                 self._add_event(RequestArchived(request=request))
+
+        self._add_event(QueueCleanedUp(queue_id=self.id))
 
     def deactivate(self) -> None:
         if not self.is_active.value:

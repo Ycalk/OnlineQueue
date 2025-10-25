@@ -1,9 +1,10 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, Field
+from uuid import UUID, uuid4
 from enum import StrEnum
 from datetime import time, date, datetime
 from .errors import TimePeriodNotValid
 from pydantic.types import StringConstraints, PositiveInt
-from typing import Annotated
+from typing import Annotated, Self
 
 
 class Name(BaseModel):
@@ -60,6 +61,26 @@ class TimePeriod(BaseModel):
         if start_time > end_time:
             raise TimePeriodNotValid("Start time must be before end time")
         return values
+
+
+class UserId(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    value: UUID = Field(default_factory=uuid4)
+
+    @classmethod
+    def from_uuid(cls, value: UUID) -> Self:
+        return cls(value=value)
+
+
+class RequestId(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    value: UUID = Field(default_factory=uuid4)
+
+    @classmethod
+    def from_uuid(cls, value: UUID) -> Self:
+        return cls(value=value)
 
 
 class RequestDateTime(BaseModel):

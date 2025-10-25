@@ -1,16 +1,13 @@
 from pydantic import BaseModel, model_validator
 from datetime import datetime
-from .user import User
 from modules.queue.domain.value_objects import (
     RequestDateTime,
     RequestStatusHistoryItem,
     RequestStatus,
+    UserId,
+    RequestId,
 )
 from modules.queue.domain.errors import NotConsistentFields
-
-# TODO: добавить request id вместо uuid.UUID
-# from modules.request.domain.aggregates import RequestId
-from uuid import UUID
 
 
 def _get_request_status(
@@ -20,8 +17,8 @@ def _get_request_status(
 
 
 class Request(BaseModel):
-    id: UUID
-    user: User
+    id: RequestId
+    user_id: UserId
     preferred_time: RequestDateTime
     confirmed_time: RequestDateTime | None = None
     status_history: list[RequestStatusHistoryItem]
