@@ -2,8 +2,8 @@ from typing import Protocol
 from modules.queue.domain.aggregates import Queue, QueueId
 
 
-class QueueRepository(Protocol):
-    def save(self, queue: Queue) -> None:
+class IQueueRepository(Protocol):
+    async def save(self, queue: Queue) -> None:
         """Сохранение или обновление пользователя
 
         Args:
@@ -11,7 +11,7 @@ class QueueRepository(Protocol):
         """
         ...
 
-    def delete(self, queue: Queue | QueueId) -> None:
+    async def delete(self, queue: Queue | QueueId) -> None:
         """Удаление очереди
 
         Args:
@@ -19,7 +19,7 @@ class QueueRepository(Protocol):
         """
         ...
 
-    def exists(self, queue_id: QueueId) -> bool:
+    async def exists(self, queue_id: QueueId) -> bool:
         """Проверка существования очереди
 
         Args:
@@ -30,7 +30,7 @@ class QueueRepository(Protocol):
         """
         ...
 
-    def find(self, queue_id: QueueId) -> Queue | None:
+    async def find(self, queue_id: QueueId) -> Queue | None:
         """Поиск очереди по идентификатору
 
         Args:
