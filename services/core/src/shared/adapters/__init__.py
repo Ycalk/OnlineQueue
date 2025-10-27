@@ -4,9 +4,9 @@ from .rest import (
     InvalidTokenError,
     TokenExpiredError,
     JWTService,
-    HTTPError,
     MessageResponse,
     get_current_user_id,
+    ErrorResponse,
 )
 
 
@@ -16,7 +16,7 @@ __all__ = [
     "TokenExpiredError",
     "JWTService",
     "TokenType",
-    "HTTPError",
     "MessageResponse",
     "get_current_user_id",
+    "ErrorResponse",
 ]
