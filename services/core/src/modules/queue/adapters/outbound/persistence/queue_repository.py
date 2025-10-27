@@ -27,15 +27,14 @@ class QueueRepository(IQueueRepository):
 
     async def save(self, queue: Queue) -> None:
         queue_model = self._queue_to_orm(queue)
+        for req in queue.requests:
+            request_schema = self._request_to_orm(req, queue_model)
+            request_schema.status_history = [
+                self._request_status_history_item_to_orm(history_item, request_schema)
+                for history_item in req.status_history
+            ]
+            queue_model.requests.append(request_schema)
         await self._session.merge(queue_model)
-        for request in queue.requests:
-            request_model = self._request_to_orm(request, queue_model)
-            await self._session.merge(request_model)
-            for history_item in request.status_history:
-                history_model = self._request_status_history_item_to_orm(
-                    history_item, request_model
-                )
-                await self._session.merge(history_model)
 
     async def delete(self, queue: Queue | QueueId) -> None:
         if isinstance(queue, Queue):

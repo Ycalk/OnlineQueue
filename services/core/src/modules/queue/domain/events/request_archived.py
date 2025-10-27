@@ -1,6 +1,9 @@
+from datetime import datetime
 from shared.building_blocks import DomainEvent
-from modules.queue.domain.entities import Request
+from modules.queue.domain.value_objects import RequestId, UserId
 
 
 class RequestArchived(DomainEvent):
-    request: Request
+    request_id: RequestId
+    user_id: UserId
+    request_created_at: datetime

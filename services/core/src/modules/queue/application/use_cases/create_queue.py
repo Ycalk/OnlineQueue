@@ -1,6 +1,5 @@
 from shared.building_blocks.event import IEventPublisher
 from shared.building_blocks.use_case import ApplicationUseCase
-
 from modules.queue.domain.commands import CreateQueue as CreateQueueCommand
 from modules.queue.domain.ports.inbound.use_cases import ICreateQueue
 from modules.queue.domain.aggregates import Queue
@@ -16,7 +15,7 @@ class CreateQueue(ApplicationUseCase, ICreateQueue):
 
     async def __call__(self, command: CreateQueueCommand) -> Queue:
         queue = Queue.create(
-            owner=command.requester,
+            owner_id=command.requester,
             name=command.name,
             description=command.description,
             cleanup_period=command.cleanup_period,

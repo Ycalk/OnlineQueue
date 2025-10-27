@@ -8,7 +8,7 @@ from .queue import Queue
 
 class Request(Base):
     __tablename__ = "request"
-    __table_args__ = {"schema": "request_schema"}
+    __table_args__ = {"schema": "queue_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column()
@@ -29,7 +29,9 @@ class Request(Base):
     )
 
     status_history: Mapped[list["RequestStatusHistoryItem"]] = relationship(
-        back_populates="request"
+        back_populates="request",
+        cascade="all, delete-orphan",
+        lazy="raise",
     )
     queue: Mapped[Queue] = relationship(back_populates="requests")
 
@@ -65,7 +67,7 @@ class Request(Base):
 
 class RequestStatusHistoryItem(Base):
     __tablename__ = "request_status_history_item"
-    __table_args__ = {"schema": "request_schema"}
+    __table_args__ = {"schema": "queue_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id))

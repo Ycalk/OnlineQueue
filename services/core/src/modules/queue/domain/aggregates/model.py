@@ -105,10 +105,22 @@ class Queue(AggregateRoot):
                 < current_time - self.cleanup_period.value_seconds
             ):
                 request.archive()
-                self._add_event(RequestArchived(request=request))
+                self._add_event(
+                    RequestArchived(
+                        request_id=request.id,
+                        user_id=request.user_id,
+                        request_created_at=request.created_at,
+                    )
+                )
             elif request.status == RequestStatus.REJECTED:
                 request.archive()
-                self._add_event(RequestArchived(request=request))
+                self._add_event(
+                    RequestArchived(
+                        request_id=request.id,
+                        user_id=request.user_id,
+                        request_created_at=request.created_at,
+                    )
+                )
             elif (
                 request.status == RequestStatus.ACCEPTED
                 and request.confirmed_time is not None
@@ -116,7 +128,13 @@ class Queue(AggregateRoot):
                 < current_time - self.cleanup_period.value_seconds
             ):
                 request.archive()
-                self._add_event(RequestArchived(request=request))
+                self._add_event(
+                    RequestArchived(
+                        request_id=request.id,
+                        user_id=request.user_id,
+                        request_created_at=request.created_at,
+                    )
+                )
 
         self._add_event(QueueCleanedUp(queue_id=self.id))
 
