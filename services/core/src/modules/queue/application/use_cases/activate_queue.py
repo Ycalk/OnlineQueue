@@ -18,7 +18,7 @@ class ActivateQueue(ApplicationUseCase, IActivateQueue):
         queue = await self._queue_repository.find(command.queue_id)
         if queue is None:
             raise QueueNotFoundError(f"Queue with id {command.queue_id} not found")
-        if queue.owner != command.requester:
+        if queue.owner_id != command.requester:
             raise NoRightsError(
                 f"User {command.requester} has no rights to change queue"
             )

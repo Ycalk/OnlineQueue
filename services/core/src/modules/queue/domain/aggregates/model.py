@@ -32,7 +32,7 @@ from modules.queue.domain.errors import (
 @dataclass
 class Queue(AggregateRoot):
     id: QueueId
-    owner: UserId
+    owner_id: UserId
     name: Name
     description: Description
     cleanup_period: CleanupPeriod
@@ -43,7 +43,7 @@ class Queue(AggregateRoot):
     @classmethod
     def create(
         cls,
-        owner: UserId,
+        owner_id: UserId,
         name: Name,
         description: Description,
         cleanup_period: CleanupPeriod,
@@ -51,7 +51,7 @@ class Queue(AggregateRoot):
     ) -> Self:
         queue = cls(
             id=QueueId(),
-            owner=owner,
+            owner_id=owner_id,
             name=name,
             description=description,
             cleanup_period=cleanup_period,
@@ -60,7 +60,7 @@ class Queue(AggregateRoot):
         queue._add_event(
             QueueCreated(
                 queue_id=queue.id,
-                owner=owner,
+                owner_id=owner_id,
                 name=name,
                 description=description,
                 cleanup_period=cleanup_period,

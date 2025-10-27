@@ -11,7 +11,7 @@ from modules.queue.domain.aggregates import QueueId
 
 class QueueCreated(DomainEvent):
     queue_id: QueueId
-    owner: UserId
+    owner_id: UserId
     name: Name
     description: Description
     cleanup_period: CleanupPeriod
