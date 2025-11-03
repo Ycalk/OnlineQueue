@@ -2,9 +2,9 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 from uuid import UUID, uuid4
 from enum import StrEnum
 from datetime import time, date, datetime
-from .errors import TimePeriodNotValid
 from pydantic.types import StringConstraints, PositiveInt
 from typing import Annotated, Self
+from .errors import TimePeriodNotValid
 
 
 class Name(BaseModel):
@@ -55,12 +55,10 @@ class TimePeriod(BaseModel):
     end_time: time
 
     @model_validator(mode="after")
-    def check_start_time_before_end_time(cls, values):
-        start_time: time = values["start_time"]
-        end_time: time = values["end_time"]
-        if start_time > end_time:
+    def check_start_time_before_end_time(self) -> Self:
+        if self.start_time > self.end_time:
             raise TimePeriodNotValid("Start time must be before end time")
-        return values
+        return self
 
 
 class UserId(BaseModel):

@@ -89,9 +89,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def generic_exception_handler(
         request: Request, exc: Exception
     ) -> JSONResponse:
-        error_response = ErrorResponse(
-            error="InternalServerError", message="An unexpected error occurred"
-        )
+        error_response = ErrorResponse(error="InternalServerError", message=str(exc))
 
         logger.error(
             f"Unexpected exception: {exc.__class__.__name__} - {str(exc)}",

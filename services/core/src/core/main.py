@@ -9,10 +9,12 @@ from shared.providers import (
     EventProvider,
     LoggingProvider,
     UserProvider,
+    QueueProvider,
 )
 from shared.adapters import ErrorResponse
 from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
+from modules.queue.adapters.inbound.rest import queue_router
 from shared.logging import setup_logging
 
 
@@ -48,6 +50,7 @@ container = make_async_container(
     PersistenceProvider(),
     EventProvider(),
     UserProvider(),
+    QueueProvider(),
 )
 
 setup_dishka(container=container, app=app)
@@ -55,3 +58,4 @@ register_exception_handlers(app)
 
 app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(user_router, prefix=settings.api_prefix)
+app.include_router(queue_router, prefix=settings.api_prefix)

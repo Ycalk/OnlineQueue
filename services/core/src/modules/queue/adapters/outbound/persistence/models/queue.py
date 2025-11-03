@@ -27,7 +27,7 @@ class Queue(Base):
         server_default=func.now(), onupdate=func.now()
     )
 
-    requests: Mapped[list[Request]] = relationship(
+    requests: Mapped[list["Request"]] = relationship(
         back_populates="queue",
         cascade="all, delete-orphan",
         lazy="raise",

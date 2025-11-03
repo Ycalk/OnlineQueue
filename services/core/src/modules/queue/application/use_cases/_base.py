@@ -25,6 +25,6 @@ class QueueOwnerUseCase(ApplicationUseCase, ABC):
             raise QueueNotFoundError(f"Queue with id {queue_id} not found")
 
         if queue.owner_id != requester:
-            raise NoRightsError(f"User {requester} has no rights to change queue")
+            raise NoRightsError(f"User {requester.value} has no rights to change queue")
 
         return queue

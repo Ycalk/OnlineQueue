@@ -4,6 +4,8 @@ EXCEPTION_STATUS_MAP: dict[str, int] = {
     "InvalidPasswordError": HTTPStatus.FORBIDDEN,
     "UserNotFoundError": HTTPStatus.NOT_FOUND,
     "UserAlreadyExistsError": HTTPStatus.CONFLICT,
+    "QueueNotFoundError": HTTPStatus.NOT_FOUND,
+    "NoRightsError": HTTPStatus.FORBIDDEN,
 }
 
 
