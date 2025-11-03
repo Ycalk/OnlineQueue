@@ -10,7 +10,7 @@ from modules.user.application.use_cases import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from tests.conftest import EventPublisherCounter
-from shared.persistence.models import User as UserSchema
+from modules.user.adapters.outbound.persistence.models import User as UserSchema
 from modules.user.application.errors import UserNotFoundError, UserAlreadyExistsError
 from modules.user.domain.aggregates import User, UserId
 from modules.user.domain.value_objects import Email, Name, HashedPassword

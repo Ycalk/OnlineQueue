@@ -6,9 +6,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from shared.persistence import DATABASE_URL
+from shared.persistence import DATABASE_URL, Base, register_models
 from core.settings import settings
-from shared.persistence.utils import Base
 
 
 class PersistenceProvider(Provider):
@@ -21,6 +20,7 @@ class PersistenceProvider(Provider):
                 poolclass=None,
             )
             async with engine.begin() as conn:
+                await register_models(conn, sqlite_mode=True)
                 await conn.run_sync(Base.metadata.create_all)
         else:
             engine = create_async_engine(

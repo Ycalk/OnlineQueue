@@ -1,7 +1,8 @@
-from fastapi import Depends, HTTPException, status
+from uuid import UUID
+from fastapi import Depends, status
+from shared.building_blocks import CustomHTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .jwt_service import JWTService, TokenType, InvalidTokenError, TokenExpiredError
-from modules.user.domain.aggregates import UserId
 
 
 security = HTTPBearer(
@@ -15,22 +16,23 @@ security = HTTPBearer(
 
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> UserId:
+) -> UUID:
     token = credentials.credentials
 
     try:
-        user_uuid = JWTService.verify_token(token, TokenType.ACCESS)
-        return UserId(value=user_uuid)
+        return JWTService.verify_token(token, TokenType.ACCESS)
 
     except TokenExpiredError:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expired",
+            error="TokenExpiredError",
+            message="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except InvalidTokenError:
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            error="InvalidTokenError",
+            message="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )

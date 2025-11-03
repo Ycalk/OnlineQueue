@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
 from importlib.metadata import version
@@ -9,8 +9,12 @@ from shared.providers import (
     EventProvider,
     LoggingProvider,
     UserProvider,
+    QueueProvider,
 )
+from shared.adapters import ErrorResponse
+from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
+from modules.queue.adapters.inbound.rest import queue_router
 from shared.logging import setup_logging
 
 
@@ -29,6 +33,16 @@ app = FastAPI(
     redoc_url=settings.api_prefix + "/redoc",
     openapi_url=settings.api_prefix + "/openapi.json",
     swagger_ui_oauth2_redirect_url=settings.api_prefix + "/docs/oauth2-redirect",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": ErrorResponse,
+            "description": (
+                "Исключение во время обработки запроса. "
+                "Нужно проверить входные данные. "
+                "Больше информации в самой ошибке"
+            ),
+        }
+    },
 )
 
 container = make_async_container(
@@ -36,10 +50,12 @@ container = make_async_container(
     PersistenceProvider(),
     EventProvider(),
     UserProvider(),
+    QueueProvider(),
 )
 
 setup_dishka(container=container, app=app)
-
+register_exception_handlers(app)
 
 app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(user_router, prefix=settings.api_prefix)
+app.include_router(queue_router, prefix=settings.api_prefix)

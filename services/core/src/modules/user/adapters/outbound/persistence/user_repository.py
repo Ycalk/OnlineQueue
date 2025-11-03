@@ -6,7 +6,7 @@ from modules.user.domain.ports.outbound import IUserRepository
 from modules.user.domain.aggregates import User, UserId
 from modules.user.domain.value_objects import Email, Name, HashedPassword
 from modules.user.application.errors import UserAlreadyExistsError
-from shared.persistence import User as UserSchema
+from .models import User as UserSchema
 
 
 class UserRepository(IUserRepository):
@@ -54,6 +54,8 @@ class UserRepository(IUserRepository):
 
         if user_model is not None:
             return self._to_domain(user_model)
+
+        return None
 
     async def find_by_email(self, email: Email) -> User | None:
         result = await self._session.execute(

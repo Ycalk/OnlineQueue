@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 from shared.building_blocks.event import IEventPublisher
-from shared.persistence.utils import Base
+from shared.persistence import Base, register_models
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -18,6 +18,7 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
         poolclass=None,
     )
     async with engine.begin() as conn:
+        await register_models(conn, sqlite_mode=True)
         await conn.run_sync(Base.metadata.create_all)
     session_factory = async_sessionmaker(
         engine,

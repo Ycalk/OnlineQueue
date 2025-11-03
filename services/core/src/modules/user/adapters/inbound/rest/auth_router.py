@@ -1,18 +1,19 @@
-from fastapi import APIRouter, Response, Cookie, HTTPException, status
+from fastapi import APIRouter, Response, Cookie, status
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from modules.user.domain.ports.inbound.use_cases import ICreateUser, ILogin
 from modules.user.domain.commands import CreateUser, Login
 from modules.user.domain.value_objects import Email, Name
-from modules.user.domain.errors import WeakPasswordError, InvalidPasswordError
-from modules.user.application.errors import UserAlreadyExistsError, UserNotFoundError
+from modules.user.domain.errors import InvalidPasswordError
+from modules.user.application.errors import UserNotFoundError
 from shared.adapters import (
     JWTService,
     InvalidTokenError,
     TokenExpiredError,
     TokenType,
-    HTTPError,
+    ErrorResponse,
     MessageResponse,
 )
+from shared.building_blocks import CustomHTTPException
 from core.settings import settings
 from .dto import RegisterRequest, LoginRequest, TokenResponse
 
@@ -43,11 +44,11 @@ def clear_refresh_token_cookie(response: Response) -> None:
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_409_CONFLICT: {
-            "model": HTTPError,
+            "model": ErrorResponse,
             "description": "Пользователь с таким email уже зарегистрирован",
         },
         status.HTTP_400_BAD_REQUEST: {
-            "model": HTTPError,
+            "model": ErrorResponse,
             "description": "Слишком слабый пароль",
         },
     },
@@ -60,28 +61,22 @@ async def register(
     """
     Регистрация нового пользователя
     """
-    try:
-        command = CreateUser(
-            email=Email(value=request.email),
-            name=Name(
-                first_name=request.first_name,
-                last_name=request.last_name,
-                patronymic=request.patronymic,
-            ),
-            password=request.password,
-        )
-        user = await create_user_uc(command)
+    command = CreateUser(
+        email=Email(value=request.email),
+        name=Name(
+            first_name=request.first_name,
+            last_name=request.last_name,
+            patronymic=request.patronymic,
+        ),
+        password=request.password,
+    )
+    user = await create_user_uc(command)
 
-        access_token = JWTService.create_access_token(user.id.value)
-        refresh_token = JWTService.create_refresh_token(user.id.value)
-        set_refresh_token_cookie(response, refresh_token)
+    access_token = JWTService.create_access_token(user.id.value)
+    refresh_token = JWTService.create_refresh_token(user.id.value)
+    set_refresh_token_cookie(response, refresh_token)
 
-        return TokenResponse(access_token=access_token)
-
-    except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-    except WeakPasswordError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return TokenResponse(access_token=access_token)
 
 
 @router.post(
@@ -89,7 +84,7 @@ async def register(
     response_model=TokenResponse,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "model": HTTPError,
+            "model": ErrorResponse,
             "description": "Неверные email или пароль",
         }
     },
@@ -112,9 +107,9 @@ async def login(
 
         return TokenResponse(access_token=access_token)
 
-    except (UserNotFoundError, InvalidPasswordError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+    except (UserNotFoundError, InvalidPasswordError) as e:
+        raise CustomHTTPException.from_exception(
+            e, status_code=status.HTTP_401_UNAUTHORIZED
         )
 
 
@@ -123,7 +118,7 @@ async def login(
     response_model=TokenResponse,
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "model": HTTPError,
+            "model": ErrorResponse,
             "description": (
                 "Refresh токена нет в куках / невалиден / истек. "
                 "После этого нужно залогиниться заново"
@@ -139,8 +134,10 @@ async def refresh_access_token(
     Обновление токена доступа
     """
     if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token not found"
+        raise CustomHTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Refresh token not found",
+            error="RefreshTokenNotFoundError",
         )
 
     try:
@@ -153,15 +150,18 @@ async def refresh_access_token(
         return TokenResponse(access_token=new_access_token)
 
     except TokenExpiredError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired"
+        raise CustomHTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Refresh token has expired",
+            error="RefreshTokenExpiredError",
         )
 
     except InvalidTokenError as e:
         clear_refresh_token_cookie(response)
-        raise HTTPException(
+        raise CustomHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid refresh token: {str(e)}",
+            message=f"Invalid refresh token: {str(e)}",
+            error="InvalidRefreshTokenError",
         )
 
 
