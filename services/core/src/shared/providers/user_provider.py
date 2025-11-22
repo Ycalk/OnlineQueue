@@ -9,6 +9,7 @@ from modules.user.application.use_cases import (
     CreateUser,
     Login,
 )
+from modules.user.application.queries import GetUser
 from modules.user.domain.ports.inbound.use_cases import (
     IChangeEmail,
     IChangeName,
@@ -16,6 +17,7 @@ from modules.user.domain.ports.inbound.use_cases import (
     ICreateUser,
     ILogin,
 )
+from modules.user.domain.ports.inbound.queries import IGetUser
 from shared.building_blocks.event import IEventPublisher
 
 
@@ -63,3 +65,11 @@ class UserProvider(Provider):
         user_repository: IUserRepository,
     ) -> IChangeEmail:
         return ChangeEmail(event_publisher, user_repository)
+
+    @provide(scope=Scope.REQUEST)
+    def get_user_query(
+        self,
+        event_publisher: IEventPublisher,
+        user_repository: IUserRepository,
+    ) -> IGetUser:
+        return GetUser(event_publisher, user_repository)

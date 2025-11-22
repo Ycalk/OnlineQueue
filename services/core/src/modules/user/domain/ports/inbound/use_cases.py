@@ -1,4 +1,4 @@
-from shared.building_blocks import UseCase
+from shared.building_blocks import DomainUseCase
 from modules.user.domain.commands import (
     CreateUser,
     Login,
@@ -9,12 +9,12 @@ from modules.user.domain.commands import (
 from modules.user.domain.aggregates import User
 
 
-ICreateUser = UseCase[CreateUser, User]
+ICreateUser = DomainUseCase[CreateUser, User]
 
-ILogin = UseCase[Login, User]
+ILogin = DomainUseCase[Login, User]
 
-IChangePassword = UseCase[ChangePassword, None]
+IChangePassword = DomainUseCase[ChangePassword, None]
 
-IChangeName = UseCase[ChangeName, None]
+IChangeName = DomainUseCase[ChangeName, None]
 
-IChangeEmail = UseCase[ChangeEmail, None]
+IChangeEmail = DomainUseCase[ChangeEmail, None]

@@ -1,4 +1,4 @@
-from shared.building_blocks import UseCase
+from shared.building_blocks import DomainUseCase
 from modules.queue.domain.commands import (
     ActivateQueue,
     ChangeCleanupPeriod,
@@ -12,18 +12,18 @@ from modules.queue.domain.commands import (
 from modules.queue.domain.aggregates import Queue
 
 
-ICreateQueue = UseCase[CreateQueue, Queue]
+ICreateQueue = DomainUseCase[CreateQueue, Queue]
 
-IChangeName = UseCase[ChangeName, None]
+IChangeName = DomainUseCase[ChangeName, None]
 
-IChangeDescription = UseCase[ChangeDescription, None]
+IChangeDescription = DomainUseCase[ChangeDescription, None]
 
-IChangeCleanupPeriod = UseCase[ChangeCleanupPeriod, None]
+IChangeCleanupPeriod = DomainUseCase[ChangeCleanupPeriod, None]
 
-ICleanupQueue = UseCase[CleanupQueue, None]
+ICleanupQueue = DomainUseCase[CleanupQueue, None]
 
-IToggleQueueActivity = UseCase[ToggleQueueActivity, None]
+IToggleQueueActivity = DomainUseCase[ToggleQueueActivity, None]
 
-IActivateQueue = UseCase[ActivateQueue, None]
+IActivateQueue = DomainUseCase[ActivateQueue, None]
 
-IDeactivateQueue = UseCase[DeactivateQueue, None]
+IDeactivateQueue = DomainUseCase[DeactivateQueue, None]

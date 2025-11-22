@@ -38,7 +38,7 @@ from .dto import (
 
 
 router = APIRouter(
-    prefix="/queue",
+    prefix="/queues",
     tags=["queues"],
     route_class=DishkaRoute,
     responses={

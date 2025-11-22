@@ -17,5 +17,5 @@ TCommand_contra = TypeVar("TCommand_contra", contravariant=True)
 TResult_co = TypeVar("TResult_co", covariant=True)
 
 
-class UseCase(Protocol[TCommand_contra, TResult_co]):
+class DomainUseCase(Protocol[TCommand_contra, TResult_co]):
     async def __call__(self, command: TCommand_contra) -> TResult_co: ...
