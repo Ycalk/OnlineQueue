@@ -11,7 +11,7 @@ class TelegramUser(Base):
     __table_args__ = {"schema": "user_schema"}
 
     telegram_id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey(User.id))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey(User.id), index=True)
     username: Mapped[str | None] = mapped_column(String(40))
     added_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

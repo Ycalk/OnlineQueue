@@ -33,6 +33,7 @@ app = FastAPI(
     redoc_url=settings.api_prefix + "/redoc",
     openapi_url=settings.api_prefix + "/openapi.json",
     swagger_ui_oauth2_redirect_url=settings.api_prefix + "/docs/oauth2-redirect",
+    lifespan=lifespan,
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "model": ErrorResponse,
@@ -56,6 +57,6 @@ container = make_async_container(
 setup_dishka(container=container, app=app)
 register_exception_handlers(app)
 
-app.include_router(auth_router, prefix=settings.api_prefix)
-app.include_router(user_router, prefix=settings.api_prefix)
-app.include_router(queue_router, prefix=settings.api_prefix)
+app.include_router(auth_router, prefix=settings.methods_prefix)
+app.include_router(user_router, prefix=settings.methods_prefix)
+app.include_router(queue_router, prefix=settings.methods_prefix)

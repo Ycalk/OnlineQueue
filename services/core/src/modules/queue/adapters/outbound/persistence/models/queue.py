@@ -14,7 +14,7 @@ class Queue(Base):
     __table_args__ = {"schema": "queue_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    owner_id: Mapped[UUID] = mapped_column()
+    owner_id: Mapped[UUID] = mapped_column(index=True)
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str | None] = mapped_column(String(1000))
     clean_up_period_days: Mapped[int] = mapped_column()

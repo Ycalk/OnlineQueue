@@ -11,8 +11,8 @@ class Request(Base):
     __table_args__ = {"schema": "queue_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    user_id: Mapped[UUID] = mapped_column()
-    queue_id: Mapped[UUID] = mapped_column(ForeignKey(Queue.id))
+    user_id: Mapped[UUID] = mapped_column(index=True)
+    queue_id: Mapped[UUID] = mapped_column(ForeignKey(Queue.id), index=True)
 
     preferred_date: Mapped[date] = mapped_column()
     preferred_time_start: Mapped[time] = mapped_column()
@@ -70,7 +70,7 @@ class RequestStatusHistoryItem(Base):
     __table_args__ = {"schema": "queue_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id))
+    request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id), index=True)
     status: Mapped[str] = mapped_column(String(50))
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
