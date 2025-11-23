@@ -29,12 +29,20 @@ packages = [
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[dependency-groups]
-dev = [
-    "alembic (>=1.17.0,<2.0.0)",
-    "pytest-asyncio (>=1.2.0,<2.0.0)",
-    "aiosqlite (>=0.21.0,<0.22.0)"
-]
+[tool.poetry.group.dev.dependencies]
+aiosqlite = ">=0.21.0,<0.22.0"
+alembic = ">=1.17.0,<2.0.0"
+pytest-asyncio = ">=1.2.0,<2.0.0"
+
+
+[tool.poetry.group.migrations.dependencies]
+alembic = ">=1.17.2,<2.0.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.migrations]
+optional = true
 
 [tool.poetry.scripts]
 core = "core.run:run"
