@@ -1,0 +1,13 @@
+from shared.building_blocks import DomainException
+
+
+class CannotDeactivateAlreadyDeactivatedQueue(DomainException): ...
+
+
+class CannotActivateActiveQueue(DomainException): ...
+
+
+class TimePeriodNotValid(DomainException): ...
+
+
+class NotConsistentFields(DomainException): ...

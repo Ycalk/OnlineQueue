@@ -1,0 +1,13 @@
+from shared.building_blocks import DomainException
+
+
+class WeakPasswordError(DomainException): ...
+
+
+class InvalidPasswordError(DomainException): ...
+
+
+class SamePasswordError(DomainException): ...
+
+
+class SameEmailError(DomainException): ...
