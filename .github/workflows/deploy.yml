@@ -1,0 +1,76 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+      
+      - name: Install dependencies
+        run: npm ci
+        working-directory: additional/client
+      
+      - name: Build frontend
+        run: npm run build
+        working-directory: additional/client
+      
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p deploy/client
+          cp -r additional/client/dist/* deploy/client/
+          cp -r services deploy/
+          cp docker-compose.yaml deploy/
+
+      - name: Archive code for deploy
+        run: |
+          cd deploy
+          zip -r ../deploy.zip . -x '*.git*' '*.github/*'
+
+      - name: Create .env file
+        run: |
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+
+      - name: Transfer files to server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          source: "deploy.zip,.env"
+          target: "/home/${{ secrets.SERVER_USER }}/OnlineQueue/"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: copy
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            cd /home/${{ secrets.SERVER_USER }}/OnlineQueue/
+            unzip -o deploy.zip
+            sudo docker compose build
+            sudo docker compose down
+            sudo docker compose up -d --remove-orphans
+            sudo docker image prune -f
+            rm deploy.zip
