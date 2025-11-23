@@ -39,13 +39,6 @@ class UpdatePasswordRequest(BaseModel):
     new_password: str = Field(description="Новый пароль пользователя")
 
 
-class UserResponse(BaseModel):
-    email: str
-    first_name: str
-    last_name: str
-    patronymic: str | None
-
-
 class UserNameResponse(BaseModel):
     first_name: str
     last_name: str

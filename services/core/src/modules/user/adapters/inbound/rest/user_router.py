@@ -6,7 +6,7 @@ from modules.user.domain.ports.inbound.use_cases import (
     IChangeName,
     IChangePassword,
 )
-from modules.user.domain.ports.inbound.queries import IGetUser
+from modules.user.application.ports.inbound.queries import IGetUser
 from modules.user.domain.aggregates import UserId
 from modules.user.domain.commands import ChangeEmail, ChangeName, ChangePassword
 from modules.user.domain.value_objects import Email
@@ -15,9 +15,9 @@ from .dto import (
     UpdateEmailRequest,
     UpdateNameRequest,
     UpdatePasswordRequest,
-    UserResponse,
     UserNameResponse,
 )
+from modules.user.application.dto import User as UserResponse
 
 
 router = APIRouter(
@@ -45,15 +45,7 @@ async def get_me(
     """
     Получить информацию о текущем пользователе
     """
-
-    user = await get_user_query(UserId(value=current_user_id))
-
-    return UserResponse(
-        email=user.email.value,
-        first_name=user.name.first_name,
-        last_name=user.name.last_name,
-        patronymic=user.name.patronymic,
-    )
+    return await get_user_query(current_user_id)
 
 
 @router.patch(
@@ -145,13 +137,13 @@ async def get_user_name(
     _: UUID = Depends(get_current_user_id),
 ) -> UserNameResponse:
     """
-    Получить информацию о текущем пользователе
+    Получить информацию о пользователе
     """
 
-    user = await get_user_query(UserId(value=user_id))
+    user = await get_user_query(user_id)
 
     return UserNameResponse(
-        first_name=user.name.first_name,
-        last_name=user.name.last_name,
-        patronymic=user.name.patronymic,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        patronymic=user.patronymic,
     )
