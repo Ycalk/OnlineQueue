@@ -37,7 +37,7 @@ router = APIRouter(
 )
 
 
-@router.get("/me")
+@router.get("/me", status_code=status.HTTP_200_OK)
 async def get_me(
     get_user_query: FromDishka[IGetUser],
     current_user_id: UUID = Depends(get_current_user_id),
@@ -60,6 +60,7 @@ async def get_me(
             "description": "Пользователь с таким email уже зарегистрирован",
         },
     },
+    status_code=status.HTTP_200_OK,
 )
 async def update_email(
     request: UpdateEmailRequest,
@@ -80,7 +81,7 @@ async def update_email(
     return MessageResponse(message="Email updated successfully")
 
 
-@router.patch("/name")
+@router.patch("/name", status_code=status.HTTP_200_OK)
 async def update_name(
     request: UpdateNameRequest,
     change_name_uc: FromDishka[IChangeName],
@@ -110,6 +111,7 @@ async def update_name(
             "description": "Неверный текущий пароль",
         },
     },
+    status_code=status.HTTP_200_OK,
 )
 async def update_password(
     request: UpdatePasswordRequest,
@@ -130,7 +132,7 @@ async def update_password(
     return MessageResponse(message="Password updated successfully")
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", status_code=status.HTTP_200_OK)
 async def get_user_name(
     user_id: UUID,
     get_user_query: FromDishka[IGetUser],

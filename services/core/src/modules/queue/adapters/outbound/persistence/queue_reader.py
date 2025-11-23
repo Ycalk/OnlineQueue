@@ -1,6 +1,8 @@
-from modules.queue.domain.ports.outbound import IQueueRepository
+from uuid import UUID
+
+from modules.queue.application.ports.outbound.queue_reader import IQueueReader
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, exists
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
 from .models import Request as RequestSchema
@@ -21,43 +23,14 @@ from modules.queue.domain.value_objects import (
 from modules.queue.domain.entities import Request
 
 
-class QueueRepository(IQueueRepository):
+class QueueReader(IQueueReader):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def save(self, queue: Queue) -> None:
-        print(f"SAVING: ID={queue.id.value}, Active={queue.is_active.value}")
-        queue_model = self._queue_to_orm(queue)
-        print(f"ORM MODEL: Active={queue_model.is_active}")
-        for req in queue.requests:
-            request_schema = self._request_to_orm(req, queue_model)
-            request_schema.status_history = [
-                self._request_status_history_item_to_orm(history_item, request_schema)
-                for history_item in req.status_history
-            ]
-            queue_model.requests.append(request_schema)
-        await self._session.merge(queue_model)
-
-    async def delete(self, queue: Queue | QueueId) -> None:
-        if isinstance(queue, Queue):
-            queue_id = queue.id.value
-        else:
-            queue_id = queue.value
-
-        await self._session.execute(
-            delete(QueueSchema).where(QueueSchema.id == queue_id)
-        )
-
-    async def exists(self, queue_id: QueueId) -> bool:
-        result = await self._session.scalar(
-            select(exists(QueueSchema.id)).where(QueueSchema.id == queue_id.value)
-        )
-        return bool(result)
-
-    async def find(self, queue_id: QueueId) -> Queue | None:
+    async def find_by_id(self, queue_id: UUID) -> Queue | None:
         result = await self._session.execute(
             select(QueueSchema)
-            .where(QueueSchema.id == queue_id.value)
+            .where(QueueSchema.id == queue_id)
             .options(
                 selectinload(QueueSchema.requests).selectinload(
                     RequestSchema.status_history
@@ -71,52 +44,35 @@ class QueueRepository(IQueueRepository):
 
         return self._queue_to_domain(queue_model)
 
-    def _queue_to_orm(self, queue: Queue) -> QueueSchema:
-        return QueueSchema(
-            id=queue.id.value,
-            owner_id=queue.owner_id.value,
-            name=queue.name.value,
-            description=queue.description.value,
-            clean_up_period_days=queue.cleanup_period.value_days,
-            reception_time_start=queue.reception_time.start_time,
-            reception_time_end=queue.reception_time.end_time,
-            is_active=queue.is_active.value,
+    async def get_many(self, skip: int, limit: int | None) -> list[Queue]:
+        result = await self._session.execute(
+            select(QueueSchema)
+            .offset(skip)
+            .limit(limit)
+            .options(
+                selectinload(QueueSchema.requests).selectinload(
+                    RequestSchema.status_history
+                )
+            )
         )
 
-    def _request_to_orm(self, request: Request, queue: QueueSchema) -> RequestSchema:
-        return RequestSchema(
-            id=request.id.value,
-            user_id=request.user_id.value,
-            queue=queue,
-            preferred_date=request.preferred_time.date,
-            preferred_time_start=request.preferred_time.time_period.start_time,
-            preferred_time_end=request.preferred_time.time_period.end_time,
-            confirmed_date=(
-                request.confirmed_time.date if request.confirmed_time else None
-            ),
-            confirmed_time_start=(
-                request.confirmed_time.time_period.start_time
-                if request.confirmed_time
-                else None
-            ),
-            confirmed_time_end=(
-                request.confirmed_time.time_period.end_time
-                if request.confirmed_time
-                else None
-            ),
-            archived=request.archived,
-            created_at=request.created_at,
-        )
+        return [
+            self._queue_to_domain(queue_model) for queue_model in result.scalars().all()
+        ]
 
-    def _request_status_history_item_to_orm(
-        self,
-        request_status_history_item: RequestStatusHistoryItem,
-        request: RequestSchema,
-    ) -> RequestStatusHistoryItemSchema:
-        return RequestStatusHistoryItemSchema(
-            request=request,
-            status=request_status_history_item.status.value,
+    async def find_by_owner_id(self, owner_id: UUID) -> list[Queue]:
+        result = await self._session.execute(
+            select(QueueSchema)
+            .where(QueueSchema.owner_id == owner_id)
+            .options(
+                selectinload(QueueSchema.requests).selectinload(
+                    RequestSchema.status_history
+                )
+            )
         )
+        return [
+            self._queue_to_domain(queue_model) for queue_model in result.scalars().all()
+        ]
 
     def _queue_to_domain(self, model: QueueSchema) -> Queue:
         return Queue(

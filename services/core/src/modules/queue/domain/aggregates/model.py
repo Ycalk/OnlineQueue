@@ -151,3 +151,16 @@ class Queue(AggregateRoot):
             raise CannotActivateActiveQueue(f"Queue {self.id.value} is already active")
         self.is_active = IsActive(value=True)
         self._add_event(QueueActivated(queue_id=self.id))
+
+    def calculate_average_requests_duration_seconds(self) -> int | None:
+        result = 0
+        count = 0
+        for request in self.requests:
+            if request.archived:
+                continue
+            if (duration := request.calculate_duration_seconds()) is not None:
+                result += duration
+                count += 1
+        if count == 0:
+            return None
+        return round(result / count)

@@ -35,6 +35,12 @@ from .dto import (
     UpdateCleanupPeriodRequest,
     QueueCreatedResponse,
 )
+from modules.queue.application.ports.inbound.queries import (
+    IGetQueueList,
+    IGetQueue,
+    IGetOwnerQueues,
+)
+from modules.queue.application.dto import Queue, GetQueueList, QueueWithRequests
 
 
 router = APIRouter(
@@ -50,14 +56,12 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "", response_model=QueueCreatedResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_queue(
     request: CreateQueueRequest,
     create_queue_uc: FromDishka[ICreateQueue],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> QueueCreatedResponse:
     """
     Создать новую очередь
     """
@@ -79,9 +83,50 @@ async def create_queue(
     )
 
 
+@router.get("", status_code=status.HTTP_200_OK)
+async def get_queue_list(
+    get_queue_list_query: FromDishka[IGetQueueList],
+    skip: int = 0,
+    limit: int | None = None,
+    current_user_id: UUID = Depends(get_current_user_id),
+) -> list[Queue]:
+    """
+    Получить список очередей
+    """
+    command = GetQueueList(
+        skip=skip,
+        limit=limit,
+    )
+
+    return await get_queue_list_query(command)
+
+
+@router.get("/my", status_code=status.HTTP_200_OK)
+async def get_my_queue_list(
+    get_owner_queue_list_query: FromDishka[IGetOwnerQueues],
+    current_user_id: UUID = Depends(get_current_user_id),
+) -> list[QueueWithRequests]:
+    """
+    Получить список очередей текущего пользователя
+    """
+
+    return await get_owner_queue_list_query(current_user_id)
+
+
+@router.get("/{queue_id}", status_code=status.HTTP_200_OK)
+async def get_queue(
+    queue_id: UUID,
+    get_queue_query: FromDishka[IGetQueue],
+    current_user_id: UUID = Depends(get_current_user_id),
+) -> Queue:
+    """
+    Получить очередь
+    """
+    return await get_queue_query(queue_id)
+
+
 @router.patch(
     "/{queue_id}/name",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -98,7 +143,7 @@ async def update_queue_name(
     request: UpdateQueueNameRequest,
     change_name_uc: FromDishka[IChangeName],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Изменить название очереди
     """
@@ -115,7 +160,6 @@ async def update_queue_name(
 
 @router.patch(
     "/{queue_id}/description",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -132,7 +176,7 @@ async def update_queue_description(
     request: UpdateQueueDescriptionRequest,
     change_description_uc: FromDishka[IChangeDescription],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Изменить описание очереди
     """
@@ -149,7 +193,6 @@ async def update_queue_description(
 
 @router.patch(
     "/{queue_id}/cleanup-period",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -166,7 +209,7 @@ async def update_cleanup_period(
     request: UpdateCleanupPeriodRequest,
     change_cleanup_period_uc: FromDishka[IChangeCleanupPeriod],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Изменить период очистки архивных заявок
     """
@@ -183,7 +226,6 @@ async def update_cleanup_period(
 
 @router.post(
     "/{queue_id}/activate",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -199,7 +241,7 @@ async def activate_queue(
     queue_id: UUID,
     activate_queue_uc: FromDishka[IActivateQueue],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Активировать очередь
     """
@@ -215,7 +257,6 @@ async def activate_queue(
 
 @router.post(
     "/{queue_id}/deactivate",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -231,7 +272,7 @@ async def deactivate_queue(
     queue_id: UUID,
     deactivate_queue_uc: FromDishka[IDeactivateQueue],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Деактивировать очередь
     """
@@ -247,7 +288,6 @@ async def deactivate_queue(
 
 @router.post(
     "/{queue_id}/toggle",
-    response_model=MessageResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -263,7 +303,7 @@ async def toggle_queue_activity(
     queue_id: UUID,
     toggle_queue_activity_uc: FromDishka[IToggleQueueActivity],
     current_user_id: UUID = Depends(get_current_user_id),
-):
+) -> MessageResponse:
     """
     Переключить статус активности очереди (активная <-> неактивная)
     """

@@ -52,5 +52,5 @@ class Queue(Base):
         self.reception_time_end = reception_time_end
         if id:
             self.id = id
-        if is_active:
+        if is_active is not None:
             self.is_active = is_active

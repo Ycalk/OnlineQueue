@@ -15,7 +15,7 @@ from shared.adapters import ErrorResponse
 from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
 from modules.queue.adapters.inbound.rest import queue_router
-from shared.logging import setup_logging
+from shared.logs import setup_logging
 
 
 @asynccontextmanager

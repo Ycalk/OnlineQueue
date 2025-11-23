@@ -32,6 +32,14 @@ class Request(BaseModel):
     def archive(self) -> None:
         self.archived = True
 
+    def calculate_duration_seconds(self) -> int | None:
+        if self.confirmed_time is None:
+            return None
+        return int(
+            self.confirmed_time.end_period.timestamp()
+            - self.confirmed_time.start_period.timestamp()
+        )
+
     @model_validator(mode="after")
     def check_confirmed_time(cls, values):
         confirmed_time: RequestDateTime | None = values.get("confirmed_time")
