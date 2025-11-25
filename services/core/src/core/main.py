@@ -15,6 +15,7 @@ from shared.adapters import ErrorResponse
 from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
 from modules.queue.adapters.inbound.rest import queue_router
+from modules.request.adapters.inbound.rest import request_router
 from shared.logs import setup_logging
 
 
@@ -60,3 +61,4 @@ register_exception_handlers(app)
 app.include_router(auth_router, prefix=settings.methods_prefix)
 app.include_router(user_router, prefix=settings.methods_prefix)
 app.include_router(queue_router, prefix=settings.methods_prefix)
+app.include_router(request_router, prefix=settings.methods_prefix)
