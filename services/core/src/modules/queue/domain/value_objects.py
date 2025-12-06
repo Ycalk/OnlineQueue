@@ -100,8 +100,3 @@ class RequestStatus(StrEnum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     REJECTED = "rejected"
-
-
-class RequestStatusHistoryItem(BaseModel):
-    status: RequestStatus
-    updated_at: datetime

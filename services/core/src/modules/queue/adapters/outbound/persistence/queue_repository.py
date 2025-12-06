@@ -4,7 +4,6 @@ from sqlalchemy import select, delete, exists
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
 from .models import Request as RequestSchema
-from .models import RequestStatusHistoryItem as RequestStatusHistoryItemSchema
 from modules.queue.domain.aggregates import Queue, QueueId
 from modules.queue.domain.value_objects import (
     Name,
@@ -16,7 +15,6 @@ from modules.queue.domain.value_objects import (
     RequestId,
     RequestDateTime,
     RequestStatus,
-    RequestStatusHistoryItem,
 )
 from modules.queue.domain.entities import Request
 
@@ -26,17 +24,12 @@ class QueueRepository(IQueueRepository):
         self._session = session
 
     async def save(self, queue: Queue) -> None:
-        print(f"SAVING: ID={queue.id.value}, Active={queue.is_active.value}")
         queue_model = self._queue_to_orm(queue)
-        print(f"ORM MODEL: Active={queue_model.is_active}")
         for req in queue.requests:
             request_schema = self._request_to_orm(req, queue_model)
-            request_schema.status_history = [
-                self._request_status_history_item_to_orm(history_item, request_schema)
-                for history_item in req.status_history
-            ]
             queue_model.requests.append(request_schema)
-        await self._session.merge(queue_model)
+        self._session.add(queue_model)
+        await self._session.flush()
 
     async def delete(self, queue: Queue | QueueId) -> None:
         if isinstance(queue, Queue):
@@ -58,11 +51,7 @@ class QueueRepository(IQueueRepository):
         result = await self._session.execute(
             select(QueueSchema)
             .where(QueueSchema.id == queue_id.value)
-            .options(
-                selectinload(QueueSchema.requests).selectinload(
-                    RequestSchema.status_history
-                )
-            )
+            .options(selectinload(QueueSchema.requests))
         )
         queue_model = result.scalar_one_or_none()
 
@@ -88,6 +77,7 @@ class QueueRepository(IQueueRepository):
             id=request.id.value,
             user_id=request.user_id.value,
             queue=queue,
+            status=request.status.value,
             preferred_date=request.preferred_time.date,
             preferred_time_start=request.preferred_time.time_period.start_time,
             preferred_time_end=request.preferred_time.time_period.end_time,
@@ -108,16 +98,6 @@ class QueueRepository(IQueueRepository):
             created_at=request.created_at,
         )
 
-    def _request_status_history_item_to_orm(
-        self,
-        request_status_history_item: RequestStatusHistoryItem,
-        request: RequestSchema,
-    ) -> RequestStatusHistoryItemSchema:
-        return RequestStatusHistoryItemSchema(
-            request=request,
-            status=request_status_history_item.status.value,
-        )
-
     def _queue_to_domain(self, model: QueueSchema) -> Queue:
         return Queue(
             id=QueueId(value=model.id),
@@ -130,21 +110,10 @@ class QueueRepository(IQueueRepository):
                 end_time=model.reception_time_end,
             ),
             is_active=IsActive(value=model.is_active),
-            requests=[
-                self._request_to_domain(
-                    request,
-                    [
-                        self._request_status_history_item_to_domain(status_history_item)
-                        for status_history_item in request.status_history
-                    ],
-                )
-                for request in model.requests
-            ],
+            requests=[self._request_to_domain(request) for request in model.requests],
         )
 
-    def _request_to_domain(
-        self, model: RequestSchema, status_history: list[RequestStatusHistoryItem]
-    ) -> Request:
+    def _request_to_domain(self, model: RequestSchema) -> Request:
         return Request(
             id=RequestId(value=model.id),
             user_id=UserId(value=model.user_id),
@@ -168,12 +137,5 @@ class QueueRepository(IQueueRepository):
             else None,
             archived=model.archived,
             created_at=model.created_at,
-            status_history=status_history,
-        )
-
-    def _request_status_history_item_to_domain(
-        self, model: RequestStatusHistoryItemSchema
-    ) -> RequestStatusHistoryItem:
-        return RequestStatusHistoryItem(
-            status=RequestStatus(value=model.status), updated_at=model.updated_at
+            status=RequestStatus(value=model.status),
         )

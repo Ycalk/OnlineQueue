@@ -28,11 +28,7 @@ class Request(Base):
         server_default=func.now(), onupdate=func.now()
     )
 
-    status_history: Mapped[list["RequestStatusHistoryItem"]] = relationship(
-        back_populates="request",
-        cascade="all, delete-orphan",
-        lazy="raise",
-    )
+    status: Mapped[str] = mapped_column(String(50))
     queue: Mapped[Queue] = relationship(back_populates="requests")
 
     def __init__(
@@ -42,6 +38,7 @@ class Request(Base):
         preferred_date: date,
         preferred_time_start: time,
         preferred_time_end: time,
+        status: str,
         confirmed_date: date | None = None,
         confirmed_time_start: time | None = None,
         confirmed_time_end: time | None = None,
@@ -51,6 +48,7 @@ class Request(Base):
     ):
         self.user_id = user_id
         self.queue = queue
+        self.status = status
         self.preferred_date = preferred_date
         self.preferred_time_start = preferred_time_start
         self.preferred_time_end = preferred_time_end
@@ -63,28 +61,3 @@ class Request(Base):
             self.archived = archived
         if created_at:
             self.created_at = created_at
-
-
-class RequestStatusHistoryItem(Base):
-    __tablename__ = "request_status_history_item"
-    __table_args__ = {"schema": "queue_schema"}
-
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id), index=True)
-    status: Mapped[str] = mapped_column(String(50))
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )
-
-    request: Mapped[Request] = relationship(back_populates="status_history")
-
-    def __init__(
-        self,
-        request: Request,
-        status: str,
-        id: UUID | None = None,
-    ):
-        self.request = request
-        self.status = status
-        if id:
-            self.id = id
