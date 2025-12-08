@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from shared.building_blocks import DomainEvent
 from modules.request.domain.value_objects import (
@@ -11,9 +12,9 @@ from modules.request.domain.value_objects import (
 
 
 class RequestCreated(DomainEvent):
-    request_id: RequestId
-    user_id: UserId
-    queue_id: QueueId
+    request_id: UUID
+    user_id: UUID
+    queue_id: UUID
     priority: RequestPriority
     created_at: datetime
     # Заявка может быть создана без конкретной даты/интервала

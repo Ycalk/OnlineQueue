@@ -15,9 +15,9 @@ from modules.request.domain.value_objects import (
     RequestConfirmationHistoryItem as ConfirmationHistoryVO,
 )
 from .models import (
-    Request as RequestSchema,
-    RequestStatusHistoryItem as RequestStatusHistoryItemSchema,
-    RequestConfirmationHistoryItem as RequestConfirmationHistoryItemSchema,
+    RequestModel as RequestSchema,
+    RequestStatusHistoryItemModel as RequestStatusHistoryItemSchema,
+    RequestConfirmationHistoryItemModel as RequestConfirmationHistoryItemSchema,
     Queue as QueueSchema,
 )
 

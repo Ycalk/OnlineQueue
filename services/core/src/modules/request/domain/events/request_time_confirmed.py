@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import UUID
+
 
 from shared.building_blocks import DomainEvent
 from modules.request.domain.value_objects import (
@@ -10,8 +12,8 @@ from modules.request.domain.value_objects import (
 
 
 class RequestTimeConfirmed(DomainEvent):
-    request_id: RequestId
-    user_id: UserId
-    queue_id: QueueId
+    request_id: UUID
+    user_id: UUID
+    queue_id: UUID
     confirmed_datetime: RequestDateTime
     confirmed_at: datetime

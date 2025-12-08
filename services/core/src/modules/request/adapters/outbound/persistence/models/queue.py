@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from shared.persistence.utils import Base
 
 if TYPE_CHECKING:
-    from .request import Request
+    from .request import RequestModel
 
 
 class Queue(Base):
@@ -28,7 +28,7 @@ class Queue(Base):
         onupdate=func.now(),
     )
 
-    requests: Mapped[list["Request"]] = relationship(
+    requests: Mapped[list["RequestModel"]] = relationship(
         back_populates="queue",
         cascade="all, delete-orphan",
         lazy="raise",
