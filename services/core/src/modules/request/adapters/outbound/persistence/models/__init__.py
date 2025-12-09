@@ -1,8 +1,8 @@
 from .queue import Queue
 from .request import (
-    Request,
-    RequestStatusHistoryItem,
-    RequestConfirmationHistoryItem,
+    RequestModel,
+    RequestStatusHistoryItemModel,
+    RequestConfirmationHistoryItemModel,
 )
 
-__all__ = ["Queue", "Request", "RequestStatusHistoryItem", "RequestConfirmationHistoryItem"]
+__all__ = ["Queue", "RequestModel", "RequestStatusHistoryItemModel", "RequestConfirmationHistoryItemModel"]

@@ -91,9 +91,9 @@ class Request(AggregateRoot):
 
         request._add_event(
             RequestCreated(
-                request_id=request.id,
-                user_id=user_id,
-                queue_id=queue_id,
+                request_id=request.id.value,
+                user_id=user_id.value,
+                queue_id=queue_id.value,
                 priority=priority,
                 created_at=now,
                 desired_datetime=preferred_datetime,
@@ -125,9 +125,9 @@ class Request(AggregateRoot):
 
         self._add_event(
             RequestCancelled(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
+                request_id=self.id.value,
+                user_id=self.user_id.value,
+                queue_id=self.queue_id.value,
                 cancelled_at=now,
             )
         )
@@ -159,9 +159,9 @@ class Request(AggregateRoot):
             )
             self._add_event(
                 RequestTimeConfirmed(
-                    request_id=self.id,
-                    user_id=self.user_id,
-                    queue_id=self.queue_id,
+                    request_id=self.id.value,
+                    user_id=self.user_id.value,
+                    queue_id=self.queue_id.value,
                     confirmed_datetime=confirmed_datetime,
                     confirmed_at=now,
                 )
@@ -169,9 +169,9 @@ class Request(AggregateRoot):
 
         self._add_event(
             RequestAccepted(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
+                request_id=self.id.value,
+                user_id=self.user_id.value,
+                queue_id=self.queue_id.value,
                 accepted_at=now,
                 confirmed_datetime=self.confirmed_datetime,
             )
@@ -194,9 +194,9 @@ class Request(AggregateRoot):
 
         self._add_event(
             RequestRejected(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
+                request_id=self.id.value,
+                user_id=self.user_id.value,
+                queue_id=self.queue_id.value,
                 rejected_at=now,
                 reason=reason,
             )
@@ -219,9 +219,9 @@ class Request(AggregateRoot):
 
         self._add_event(
             RequestCompleted(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
+                request_id=self.id.value,
+                user_id=self.user_id.value,
+                queue_id=self.queue_id.value,
                 completed_at=now,
             )
         )
@@ -236,9 +236,9 @@ class Request(AggregateRoot):
 
         self._add_event(
             RequestArchived(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
+                request_id=self.id.value,
+                user_id=self.user_id.value,
+                queue_id=self.queue_id.value,
                 archived_at=now,
             )
         )

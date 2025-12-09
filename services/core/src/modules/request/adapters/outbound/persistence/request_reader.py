@@ -17,11 +17,7 @@ from modules.request.domain.value_objects import (
     RequestStatusHistoryItem as StatusHistoryVO,
     RequestConfirmationHistoryItem as ConfirmationHistoryVO,
 )
-from .models import (
-    Request as RequestSchema,
-    RequestStatusHistoryItem as RequestStatusHistoryItemSchema,
-    RequestConfirmationHistoryItem as RequestConfirmationHistoryItemSchema,
-)
+from .models import RequestModel as RequestSchema
 
 
 class RequestReader(IRequestReader):

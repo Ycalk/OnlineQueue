@@ -1,8 +1,12 @@
 from uuid import UUID
 
 from shared.building_blocks import QueryUseCase
-from modules.request.application.dto import GetRequestList, Request
-
+from modules.request.application.dto import (
+    GetRequestList,
+    Request,
+    GetUserRequests as GetUserRequestsDto,
+    GetQueueRequests as GetQueueRequestsDto,
+)
 
 # Пагинированный список всех заявок
 IGetRequestList = QueryUseCase[GetRequestList, list[Request]]
@@ -11,7 +15,7 @@ IGetRequestList = QueryUseCase[GetRequestList, list[Request]]
 IGetRequest = QueryUseCase[UUID, Request]
 
 # Все заявки конкретного пользователя
-IGetUserRequests = QueryUseCase[UUID, list[Request]]
+IGetUserRequests = QueryUseCase[GetUserRequestsDto, list[Request]]
 
-# Все заявки в конкретной очереди (внутри bounded context request)
-IGetQueueRequests = QueryUseCase[UUID, list[Request]]
+# Все заявки в конкретной очереди
+IGetQueueRequests = QueryUseCase[GetQueueRequestsDto, list[Request]]

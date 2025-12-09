@@ -8,7 +8,7 @@ from shared.persistence.utils import Base
 from .queue import Queue
 
 
-class Request(Base):
+class RequestModel(Base):
     __tablename__ = "request"
     __table_args__ = {"schema": "request_schema"}
 
@@ -36,12 +36,12 @@ class Request(Base):
         onupdate=func.now(),
     )
 
-    status_history: Mapped[list["RequestStatusHistoryItem"]] = relationship(
+    status_history: Mapped[list["RequestStatusHistoryItemModel"]] = relationship(
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
     )
-    confirmation_history: Mapped[list["RequestConfirmationHistoryItem"]] = relationship(
+    confirmation_history: Mapped[list["RequestConfirmationHistoryItemModel"]] = relationship(
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
@@ -89,23 +89,23 @@ class Request(Base):
             self.created_at = created_at
 
 
-class RequestStatusHistoryItem(Base):
+class RequestStatusHistoryItemModel(Base):
     __tablename__ = "request_status_history_item"
     __table_args__ = {"schema": "request_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id), index=True)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey(RequestModel.id), index=True)
     status: Mapped[str] = mapped_column(String(50))
     updated_at: Mapped[DateTimeType] = mapped_column(
         server_default=func.now(),
         onupdate=func.now(),
     )
 
-    request: Mapped[Request] = relationship(back_populates="status_history")
+    request: Mapped[RequestModel] = relationship(back_populates="status_history")
 
     def __init__(
         self,
-        request: Request,
+        request: RequestModel,
         status: str,
         id: UUID | None = None,
     ):
@@ -115,12 +115,12 @@ class RequestStatusHistoryItem(Base):
             self.id = id
 
 
-class RequestConfirmationHistoryItem(Base):
+class RequestConfirmationHistoryItemModel(Base):
     __tablename__ = "request_confirmation_history_item"
     __table_args__ = {"schema": "request_schema"}
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id), index=True)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey(RequestModel.id), index=True)
 
     date: Mapped[DateType] = mapped_column()
     time_start: Mapped[TimeType] = mapped_column()
@@ -130,11 +130,11 @@ class RequestConfirmationHistoryItem(Base):
         onupdate=func.now(),
     )
 
-    request: Mapped[Request] = relationship(back_populates="confirmation_history")
+    request: Mapped[RequestModel] = relationship(back_populates="confirmation_history")
 
     def __init__(
         self,
-        request: Request,
+        request: RequestModel,
         date: DateType,
         time_start: TimeType,
         time_end: TimeType,
