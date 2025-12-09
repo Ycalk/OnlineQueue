@@ -28,8 +28,12 @@ from modules.request.application.ports.inbound.queries import (
     IGetUserRequests,
     IGetQueueRequests,
 )
-from modules.request.application.dto import Request, GetRequestList
-
+from modules.request.application.dto import (
+    Request,
+    GetRequestList,
+    GetUserRequests as GetUserRequestsDto,
+    GetQueueRequests as GetQueueRequestsDto,
+)
 from shared.adapters import get_current_user_id, MessageResponse, ErrorResponse
 from .dto import (
     CreateRequestRequest,
@@ -94,10 +98,8 @@ async def get_my_requests(
     get_user_requests_query: FromDishka[IGetUserRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
-    """
-    Получить все записи текущего пользователя.
-    """
-    return await get_user_requests_query(current_user_id)
+    dto = GetUserRequestsDto(user_id=current_user_id)
+    return await get_user_requests_query(dto)
 
 
 @router.get("/by-queue/{queue_id}", status_code=status.HTTP_200_OK)
@@ -106,11 +108,8 @@ async def get_queue_requests(
     get_queue_requests_query: FromDishka[IGetQueueRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
-    """
-    Получить все записи в указанной очереди (по локальному queue_id bounded context request).
-    """
-    return await get_queue_requests_query(queue_id)
-
+    dto = GetQueueRequestsDto(queue_id=queue_id)
+    return await get_queue_requests_query(dto)
 
 @router.get("/{request_id}", status_code=status.HTTP_200_OK)
 async def get_request(
