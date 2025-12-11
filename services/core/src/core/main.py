@@ -10,6 +10,7 @@ from shared.providers import (
     LoggingProvider,
     UserProvider,
     QueueProvider,
+    RequestProvider,
 )
 from shared.adapters import ErrorResponse
 from .middleware import register_exception_handlers
@@ -53,6 +54,7 @@ container = make_async_container(
     EventProvider(),
     UserProvider(),
     QueueProvider(),
+    RequestProvider(),
 )
 
 setup_dishka(container=container, app=app)

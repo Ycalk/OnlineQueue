@@ -1,25 +1,32 @@
 from dataclasses import dataclass, field
-from datetime import datetime
 
 from shared.building_blocks import AggregateRoot
+from .id import RequestId
+from modules.request.domain.entities import Queue
 from modules.request.domain.value_objects import (
-    RequestId,
+    Purpose,
     UserId,
-    QueueId,
     RequestStatus,
     RequestPriority,
-    RequestDateTime,
+    RequestDatetime,
     RequestStatusHistoryItem,
-    RequestConfirmationHistoryItem,
+    RequestConfirmationDatetimeHistoryItem,
+    RequestPriorityHistoryItem,
+    Comment,
 )
 from modules.request.domain.events import (
     RequestCreated,
-    RequestCancelled,
     RequestAccepted,
     RequestRejected,
-    RequestCompleted,
-    RequestTimeConfirmed,
-    RequestArchived,    
+    RequestChangedConfirmedDatetime,
+    RequestChangedPriority,
+    AddedComment,
+)
+from modules.request.domain.errors import (
+    RejectedRequestIsFrozen,
+    ArchivedRequestIsFrozen,
+    PreferredVisitingTimeMustBeInsideQueueReceptionTime,
+    CannotCreateRequestToInactiveQueue,
 )
 
 
@@ -27,76 +34,85 @@ from modules.request.domain.events import (
 class Request(AggregateRoot):
     # Идентификаторы и базовые данные
     id: RequestId
-    purpose: str
+    purpose: Purpose
     user_id: UserId
-    queue_id: QueueId
-
-    # Статус и приоритет
-    status: RequestStatus
-    priority: RequestPriority
-
-    # Время создания/обновления
-    created_at: datetime
-    updated_at: datetime | None = None
+    queue: Queue
 
     # Предпочитаемое и подтверждённое время записи
-    preferred_datetime: RequestDateTime | None = None
-    confirmed_datetime: RequestDateTime | None = None
+    preferred_datetime: RequestDatetime
 
     # История статусов и подтверждений
     status_history: list[RequestStatusHistoryItem] = field(default_factory=list)
-    confirmation_history: list[RequestConfirmationHistoryItem] = field(default_factory=list)
+    confirmation_datetime_history: list[RequestConfirmationDatetimeHistoryItem] = field(
+        default_factory=list
+    )
+    priority_history: list[RequestPriorityHistoryItem] = field(default_factory=list)
+    comments: list[Comment] = field(default_factory=list)
 
     # Архивация
     archived: bool = field(default=False)
 
-    # ---------- Фабрика ----------
+    @property
+    def status(self) -> RequestStatus:
+        return max(self.status_history, key=lambda x: x.occurred_at).status
+
+    @property
+    def priority(self) -> RequestPriority:
+        return max(self.priority_history, key=lambda x: x.occurred_at).priority
+
+    @property
+    def confirmed_datetime(self) -> RequestDatetime | None:
+        return (
+            max(
+                self.confirmation_datetime_history,
+                key=lambda x: x.confirmation_datetime.time_period.start_time,
+            ).confirmation_datetime
+            if len(self.confirmation_datetime_history) > 0
+            else None
+        )
 
     @classmethod
     def create(
         cls,
         user_id: UserId,
-        queue_id: QueueId,
-        purpose: str,
+        queue: Queue,
+        purpose: Purpose,
+        preferred_datetime: RequestDatetime,
         priority: RequestPriority = RequestPriority.MEDIUM,
-        preferred_datetime: RequestDateTime | None = None,
     ) -> "Request":
-        now = datetime.utcnow()
+        if not queue.is_active:
+            raise CannotCreateRequestToInactiveQueue(
+                f"Queue {queue.id.value} is inactive"
+            )
+
+        if not preferred_datetime.time_period.is_inside(queue.reception_time):
+            raise PreferredVisitingTimeMustBeInsideQueueReceptionTime(
+                "Preferred visiting time must be inside queue reception time"
+            )
 
         request = cls(
             id=RequestId(),
             purpose=purpose,
             user_id=user_id,
-            queue_id=queue_id,
-            status=RequestStatus.PENDING,
-            priority=priority,
-            created_at=now,
-            updated_at=now,
+            queue=queue,
             preferred_datetime=preferred_datetime,
         )
 
         request.status_history.append(
-            RequestStatusHistoryItem(status=RequestStatus.PENDING, updated_at=now)
+            RequestStatusHistoryItem(status=RequestStatus.PENDING)
         )
 
-        if preferred_datetime is not None:
-            request.confirmation_history.append(
-                RequestConfirmationHistoryItem(
-                    date=preferred_datetime.date,
-                    time_start=preferred_datetime.time_period.start_time,
-                    time_end=preferred_datetime.time_period.end_time,
-                    updated_at=now,
-                )
-            )
+        request.priority_history.append(RequestPriorityHistoryItem(priority=priority))
 
         request._add_event(
             RequestCreated(
                 request_id=request.id,
                 user_id=user_id,
-                queue_id=queue_id,
+                queue_id=queue.id,
+                purpose=purpose,
+                preferred_datetime=preferred_datetime,
                 priority=priority,
-                created_at=now,
-                desired_datetime=preferred_datetime,
+                status=RequestStatus.PENDING,
             )
         )
 
@@ -104,141 +120,72 @@ class Request(AggregateRoot):
 
     # ---------- Команды домена ----------
 
-    def cancel(self) -> None:
+    def update_confirmation_datetime(
+        self, new_confirmed_datetime: RequestDatetime
+    ) -> None:
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen(
+                "Rejected request confirmation datetime is unchangeable"
+            )
+
         if self.archived:
-            return
+            raise ArchivedRequestIsFrozen(
+                "Archived request confirmation datetime is unchangeable"
+            )
 
-        if self.status in (
-            RequestStatus.REJECTED,
-            RequestStatus.COMPLETED,
-            RequestStatus.CANCELLED,
-        ):
-            return
-
-        now = datetime.utcnow()
-        self.status = RequestStatus.CANCELLED
-        self.updated_at = now
-
-        self.status_history.append(
-            RequestStatusHistoryItem(status=self.status, updated_at=now)
-        )
-
-        self._add_event(
-            RequestCancelled(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
-                cancelled_at=now,
+        self.confirmation_datetime_history.append(
+            RequestConfirmationDatetimeHistoryItem(
+                confirmation_datetime=new_confirmed_datetime
             )
         )
-
-    def accept(self, confirmed_datetime: RequestDateTime | None = None) -> None:
-        if self.archived:
-            return
-
-        if self.status is not RequestStatus.PENDING:
-            return
-
-        now = datetime.utcnow()
-        self.status = RequestStatus.ACCEPTED
-        self.updated_at = now
-
-        self.status_history.append(
-            RequestStatusHistoryItem(status=self.status, updated_at=now)
-        )
-
-        if confirmed_datetime is not None:
-            self.confirmed_datetime = confirmed_datetime
-            self.confirmation_history.append(
-                RequestConfirmationHistoryItem(
-                    date=confirmed_datetime.date,
-                    time_start=confirmed_datetime.time_period.start_time,
-                    time_end=confirmed_datetime.time_period.end_time,
-                    updated_at=now,
-                )
+        if self.status == RequestStatus.PENDING:
+            self.status_history.append(
+                RequestStatusHistoryItem(status=RequestStatus.ACCEPTED)
             )
             self._add_event(
-                RequestTimeConfirmed(
+                RequestAccepted(
                     request_id=self.id,
-                    user_id=self.user_id,
-                    queue_id=self.queue_id,
-                    confirmed_datetime=confirmed_datetime,
-                    confirmed_at=now,
+                    confirmed_datetime=new_confirmed_datetime,
+                )
+            )
+        else:
+            self._add_event(
+                RequestChangedConfirmedDatetime(
+                    request_id=self.id, new_confirmed_datetime=new_confirmed_datetime
                 )
             )
 
+    def update_priority(self, new_priority: RequestPriority) -> None:
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen("Rejected request priority is unchangeable")
+
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
+
+        self.priority_history.append(RequestPriorityHistoryItem(priority=new_priority))
         self._add_event(
-            RequestAccepted(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
-                accepted_at=now,
-                confirmed_datetime=self.confirmed_datetime,
-            )
+            RequestChangedPriority(request_id=self.id, new_priority=new_priority)
         )
 
-    def reject(self, reason: str | None = None) -> None:
+    def reject(self) -> None:
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen("Rejected request priority is unchangeable")
+
         if self.archived:
-            return
-
-        if self.status is not RequestStatus.PENDING:
-            return
-
-        now = datetime.utcnow()
-        self.status = RequestStatus.REJECTED
-        self.updated_at = now
+            raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
 
         self.status_history.append(
-            RequestStatusHistoryItem(status=self.status, updated_at=now)
+            RequestStatusHistoryItem(status=RequestStatus.REJECTED)
         )
 
-        self._add_event(
-            RequestRejected(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
-                rejected_at=now,
-                reason=reason,
-            )
-        )
+        self._add_event(RequestRejected(request_id=self.id))
 
-    def complete(self) -> None:
+    def add_comment(self, comment: Comment) -> None:
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen("Rejected request priority is unchangeable")
+
         if self.archived:
-            return
+            raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
 
-        if self.status is not RequestStatus.ACCEPTED:
-            return
-
-        now = datetime.utcnow()
-        self.status = RequestStatus.COMPLETED
-        self.updated_at = now
-
-        self.status_history.append(
-            RequestStatusHistoryItem(status=self.status, updated_at=now)
-        )
-
-        self._add_event(
-            RequestCompleted(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
-                completed_at=now,
-            )
-        )
-
-    def archive(self) -> None:
-        if self.archived:
-            return
-
-        now = datetime.utcnow()
-        self.archived = True
-        self.updated_at = now
-
-        self._add_event(
-            RequestArchived(
-                request_id=self.id,
-                user_id=self.user_id,
-                queue_id=self.queue_id,
-                archived_at=now,
-            )
-        )
+        self.comments.append(comment)
+        self._add_event(AddedComment(request_id=self.id, comment=comment))

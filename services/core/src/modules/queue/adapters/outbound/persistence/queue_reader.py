@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
 from .models import Request as RequestSchema
-from .models import RequestStatusHistoryItem as RequestStatusHistoryItemSchema
 from modules.queue.domain.aggregates import Queue, QueueId
 from modules.queue.domain.value_objects import (
     Name,
@@ -18,7 +17,6 @@ from modules.queue.domain.value_objects import (
     RequestId,
     RequestDateTime,
     RequestStatus,
-    RequestStatusHistoryItem,
 )
 from modules.queue.domain.entities import Request
 
@@ -31,11 +29,7 @@ class QueueReader(IQueueReader):
         result = await self._session.execute(
             select(QueueSchema)
             .where(QueueSchema.id == queue_id)
-            .options(
-                selectinload(QueueSchema.requests).selectinload(
-                    RequestSchema.status_history
-                )
-            )
+            .options(selectinload(QueueSchema.requests))
         )
         queue_model = result.scalar_one_or_none()
 
@@ -49,11 +43,7 @@ class QueueReader(IQueueReader):
             select(QueueSchema)
             .offset(skip)
             .limit(limit)
-            .options(
-                selectinload(QueueSchema.requests).selectinload(
-                    RequestSchema.status_history
-                )
-            )
+            .options(selectinload(QueueSchema.requests))
         )
 
         return [
@@ -64,11 +54,7 @@ class QueueReader(IQueueReader):
         result = await self._session.execute(
             select(QueueSchema)
             .where(QueueSchema.owner_id == owner_id)
-            .options(
-                selectinload(QueueSchema.requests).selectinload(
-                    RequestSchema.status_history
-                )
-            )
+            .options(selectinload(QueueSchema.requests))
         )
         return [
             self._queue_to_domain(queue_model) for queue_model in result.scalars().all()
@@ -86,21 +72,10 @@ class QueueReader(IQueueReader):
                 end_time=model.reception_time_end,
             ),
             is_active=IsActive(value=model.is_active),
-            requests=[
-                self._request_to_domain(
-                    request,
-                    [
-                        self._request_status_history_item_to_domain(status_history_item)
-                        for status_history_item in request.status_history
-                    ],
-                )
-                for request in model.requests
-            ],
+            requests=[self._request_to_domain(request) for request in model.requests],
         )
 
-    def _request_to_domain(
-        self, model: RequestSchema, status_history: list[RequestStatusHistoryItem]
-    ) -> Request:
+    def _request_to_domain(self, model: RequestSchema) -> Request:
         return Request(
             id=RequestId(value=model.id),
             user_id=UserId(value=model.user_id),
@@ -124,12 +99,5 @@ class QueueReader(IQueueReader):
             else None,
             archived=model.archived,
             created_at=model.created_at,
-            status_history=status_history,
-        )
-
-    def _request_status_history_item_to_domain(
-        self, model: RequestStatusHistoryItemSchema
-    ) -> RequestStatusHistoryItem:
-        return RequestStatusHistoryItem(
-            status=RequestStatus(value=model.status), updated_at=model.updated_at
+            status=RequestStatus(value=model.status),
         )

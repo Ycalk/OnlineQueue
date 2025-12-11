@@ -1,7 +1,8 @@
 from typing import Protocol
 
-from modules.request.domain.aggregates import Request
-from modules.request.domain.value_objects import RequestId, UserId, QueueId
+from modules.request.domain.aggregates import Request, RequestId
+from modules.request.domain.value_objects import QueueId
+from modules.request.domain.entities import Queue
 
 
 class IRequestRepository(Protocol):
@@ -10,14 +11,6 @@ class IRequestRepository(Protocol):
 
         Args:
             request (Request): агрегат заявки.
-        """
-        ...
-
-    async def delete(self, request: Request | RequestId) -> None:
-        """Удаление заявки.
-
-        Args:
-            request (Request | RequestId): заявка или её идентификатор.
         """
         ...
 
@@ -32,7 +25,7 @@ class IRequestRepository(Protocol):
         """
         ...
 
-    async def find(self, request_id: RequestId) -> Request | None:
+    async def find_by_id(self, request_id: RequestId) -> Request | None:
         """Поиск заявки по идентификатору.
 
         Args:
@@ -43,20 +36,13 @@ class IRequestRepository(Protocol):
         """
         ...
 
-    async def find_by_user_and_queue(
-        self,
-        user_id: UserId,
-        queue_id: QueueId,
-    ) -> list[Request]:
-        """Поиск заявок пользователя в конкретной очереди.
-
-        Это удобно для сценариев «мои записи в этой очереди».
+    async def find_queue_by_id(self, queue_id: QueueId) -> Queue | None:
+        """Поиск очереди по идентификатору.
 
         Args:
-            user_id (UserId): идентификатор пользователя.
             queue_id (QueueId): идентификатор очереди.
 
         Returns:
-            list[Request]: список заявок.
+            Queue | None: найденная очередь или None.
         """
         ...

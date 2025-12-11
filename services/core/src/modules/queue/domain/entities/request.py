@@ -2,7 +2,6 @@ from pydantic import BaseModel, model_validator
 from datetime import datetime
 from modules.queue.domain.value_objects import (
     RequestDateTime,
-    RequestStatusHistoryItem,
     RequestStatus,
     UserId,
     RequestId,
@@ -10,24 +9,21 @@ from modules.queue.domain.value_objects import (
 from modules.queue.domain.errors import NotConsistentFields
 
 
-def _get_request_status(
-    status_history: list[RequestStatusHistoryItem],
-) -> RequestStatus:
-    return min(status_history, key=lambda x: x.updated_at).status
-
-
+# Значения статусов в связке с флагом archived
+# PENDING archived - заявка попала под авто очистку
+# PENDING not archived - ожидает подтверждения владельцем очереди и назначения времени
+# ACCEPTED archived - заявка успешно обработана
+# ACCEPTED not archived - время назначено и пользователь ожидает визит
+# REJECTED archived - заявка отклонена владельцем очереди
+# REJECTED not archived - невозможная связка значений
 class Request(BaseModel):
     id: RequestId
     user_id: UserId
     preferred_time: RequestDateTime
     confirmed_time: RequestDateTime | None = None
-    status_history: list[RequestStatusHistoryItem]
+    status: RequestStatus
     archived: bool
     created_at: datetime
-
-    @property
-    def status(self) -> RequestStatus:
-        return _get_request_status(self.status_history)
 
     def archive(self) -> None:
         self.archived = True
@@ -43,18 +39,17 @@ class Request(BaseModel):
     @model_validator(mode="after")
     def check_confirmed_time(cls, values):
         confirmed_time: RequestDateTime | None = values.get("confirmed_time")
-        status_history: list[RequestStatusHistoryItem] = values.get("status_history")
+        status: RequestStatus = values.get("status")
         archived: bool = values.get("archived")
-        current_status = _get_request_status(status_history)
 
-        if current_status == RequestStatus.ACCEPTED and confirmed_time is None:
+        if status == RequestStatus.ACCEPTED and confirmed_time is None:
             raise NotConsistentFields(
                 "Confirmed time is required when request is accepted"
             )
-        elif current_status == RequestStatus.PENDING and confirmed_time is not None:
+        elif status == RequestStatus.PENDING and confirmed_time is not None:
             raise NotConsistentFields(
                 "Confirmed time must not be set when request is pending"
             )
-        elif current_status == RequestStatus.REJECTED and not archived:
+        elif status == RequestStatus.REJECTED and not archived:
             raise NotConsistentFields("Request must be archived when rejected")
         return values

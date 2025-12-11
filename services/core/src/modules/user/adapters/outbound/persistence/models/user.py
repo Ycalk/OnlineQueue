@@ -26,9 +26,7 @@ class User(Base):
     )
 
     telegram_account: Mapped[Optional["TelegramUser"]] = relationship(
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
 
     def __init__(

@@ -1,41 +1,47 @@
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Body
 
 from modules.request.domain.commands import (
     CreateRequest,
-    UpdateRequestTime,
+    UpdateRequestConfirmationDatetime,
     UpdateRequestPriority,
-    UpdateRequestStatus,
-    ArchiveRequest,
+    RejectRequest,
+    AddComment,
 )
 from modules.request.domain.value_objects import (
     UserId,
     QueueId,
-    RequestId,
+    Purpose,
+    RequestDatetime,
+    TimePeriod,
 )
+from modules.request.domain.aggregates import RequestId
 from modules.request.domain.ports.inbound import (
     ICreateRequest,
-    IUpdateRequestTime,
     IUpdateRequestPriority,
-    IUpdateRequestStatus,
-    IArchiveRequest,
+    IUpdateRequestConfirmationDatetime,
+    IRejectRequest,
+    IAddComment,
 )
 from modules.request.application.ports.inbound.queries import (
-    IGetRequestList,
+    IGetQueueOwnerRequests,
     IGetRequest,
     IGetUserRequests,
     IGetQueueRequests,
 )
-from modules.request.application.dto import Request, GetRequestList
-
+from modules.request.application.dto import (
+    Request,
+    GetRequest as GetRequestQueryDTO,
+    GetUserRequests as GetUserRequestsQueryDTO,
+    GetQueueRequests as GetQueueRequestsQueryDTO,
+)
 from shared.adapters import get_current_user_id, MessageResponse, ErrorResponse
 from .dto import (
     CreateRequestRequest,
-    UpdateRequestTimeRequest,
+    UpdateRequestConfirmationDatetime as UpdateRequestConfirmationDatetimeRequest,
     UpdateRequestPriorityRequest,
-    UpdateRequestStatusRequest,
     RequestCreatedResponse,
 )
 
@@ -64,10 +70,14 @@ async def create_request(
     command = CreateRequest(
         requester=UserId(value=current_user_id),
         queue_id=QueueId(value=request.queue_id),
-        purpose=request.purpose,
-        preferred_date=request.get_preferred_date(),
-        preferred_time_start=request.get_preferred_time_start(),
-        preferred_time_end=request.get_preferred_time_end(),
+        purpose=Purpose(value=request.purpose),
+        preferred_datetime=RequestDatetime(
+            date=request.get_preferred_date(),
+            time_period=TimePeriod(
+                start_time=request.get_preferred_time_start(),
+                end_time=request.get_preferred_time_end(),
+            ),
+        ),
     )
 
     req = await create_request_uc(command)
@@ -75,41 +85,35 @@ async def create_request(
     return RequestCreatedResponse(id=req.id.value)
 
 
-@router.get("", status_code=status.HTTP_200_OK)
-async def get_request_list(
-    get_request_list_query: FromDishka[IGetRequestList],
+@router.get("/my", status_code=status.HTTP_200_OK)
+async def get_my_requests(
+    get_user_requests_query: FromDishka[IGetUserRequests],
     skip: int = 0,
     limit: int | None = None,
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
-    """
-    Получить список всех записей (с пагинацией).
-    """
-    dto = GetRequestList(skip=skip, limit=limit)
-    return await get_request_list_query(dto)
+    return await get_user_requests_query(
+        GetUserRequestsQueryDTO(user_id=current_user_id, skip=skip, limit=limit)
+    )
 
 
-@router.get("/my", status_code=status.HTTP_200_OK)
-async def get_my_requests(
-    get_user_requests_query: FromDishka[IGetUserRequests],
+@router.get("/queue/my", status_code=status.HTTP_200_OK)
+async def get_requests_in_my_queues(
+    get_queue_requests_query: FromDishka[IGetQueueOwnerRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
-    """
-    Получить все записи текущего пользователя.
-    """
-    return await get_user_requests_query(current_user_id)
+    return await get_queue_requests_query(current_user_id)
 
 
-@router.get("/by-queue/{queue_id}", status_code=status.HTTP_200_OK)
+@router.get("/queue/{queue_id}", status_code=status.HTTP_200_OK)
 async def get_queue_requests(
     queue_id: UUID,
     get_queue_requests_query: FromDishka[IGetQueueRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
-    """
-    Получить все записи в указанной очереди (по локальному queue_id bounded context request).
-    """
-    return await get_queue_requests_query(queue_id)
+    return await get_queue_requests_query(
+        GetQueueRequestsQueryDTO(queue_id=queue_id, requester_id=current_user_id)
+    )
 
 
 @router.get("/{request_id}", status_code=status.HTTP_200_OK)
@@ -121,7 +125,9 @@ async def get_request(
     """
     Получить запись по id.
     """
-    return await get_request_query(request_id)
+    return await get_request_query(
+        GetRequestQueryDTO(request_id=request_id, requester_id=current_user_id)
+    )
 
 
 @router.patch(
@@ -137,24 +143,28 @@ async def get_request(
         },
     },
 )
-async def update_request_time(
+async def update_request_confirmation_time(
     request_id: UUID,
-    request: UpdateRequestTimeRequest,
-    update_time_uc: FromDishka[IUpdateRequestTime],
+    request: UpdateRequestConfirmationDatetimeRequest,
+    update_time_uc: FromDishka[IUpdateRequestConfirmationDatetime],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
     Обновить / назначить конкретное время записи (дата + время + длительность).
     """
-    command = UpdateRequestTime(
-        requester=UserId(value=current_user_id),
-        request_id=RequestId(value=request_id),
-        date=request.get_date(),
-        time_start=request.get_time_start(),
-        duration_minutes=request.duration_minutes,
+    await update_time_uc(
+        UpdateRequestConfirmationDatetime(
+            requester=UserId(value=current_user_id),
+            request_id=RequestId(value=request_id),
+            new_confirmed_datetime=RequestDatetime(
+                date=request.get_date(),
+                time_period=TimePeriod(
+                    start_time=request.get_time_start(),
+                    end_time=request.get_time_end(),
+                ),
+            ),
+        )
     )
-
-    await update_time_uc(command)
     return MessageResponse(message="Request time updated successfully")
 
 
@@ -191,7 +201,7 @@ async def update_request_priority(
 
 
 @router.patch(
-    "/{request_id}/status",
+    "/{request_id}/reject",
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -203,27 +213,25 @@ async def update_request_priority(
         },
     },
 )
-async def update_request_status(
+async def reject_request(
     request_id: UUID,
-    request: UpdateRequestStatusRequest,
-    update_status_uc: FromDishka[IUpdateRequestStatus],
+    reject_uc: FromDishka[IRejectRequest],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Обновить статус записи (в очереди / принят / отклонён).
+    Отклонить запись.
     """
-    command = UpdateRequestStatus(
+    command = RejectRequest(
         requester=UserId(value=current_user_id),
         request_id=RequestId(value=request_id),
-        new_status=request.new_status,
     )
 
-    await update_status_uc(command)
-    return MessageResponse(message="Request status updated successfully")
+    await reject_uc(command)
+    return MessageResponse(message="Request rejected successfully")
 
 
 @router.post(
-    "/{request_id}/archive",
+    "/{request_id}/comment",
     responses={
         status.HTTP_404_NOT_FOUND: {
             "model": ErrorResponse,
@@ -234,19 +242,22 @@ async def update_request_status(
             "description": "Нет прав для изменения записи",
         },
     },
+    status_code=status.HTTP_201_CREATED,
 )
-async def archive_request(
+async def add_comment(
     request_id: UUID,
-    archive_request_uc: FromDishka[IArchiveRequest],
+    add_comment_uc: FromDishka[IAddComment],
+    text: str = Body(..., embed=True, description="Текст комментария"),
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Архивировать запись.
+    Добавить комментарии к записи.
     """
-    command = ArchiveRequest(
+    command = AddComment(
         requester=UserId(value=current_user_id),
         request_id=RequestId(value=request_id),
+        text=text,
     )
 
-    await archive_request_uc(command)
-    return MessageResponse(message="Request archived successfully")
+    await add_comment_uc(command)
+    return MessageResponse(message="Comment added successfully")

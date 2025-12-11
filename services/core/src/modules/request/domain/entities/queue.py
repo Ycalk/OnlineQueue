@@ -9,16 +9,6 @@ from modules.request.domain.value_objects import (
 
 
 class Queue(BaseModel):
-    """
-    Локальная модель очереди внутри bounded context `request`.
-
-    Хранит только те данные, которые нужны этому контексту:
-    - id очереди
-    - активна ли она
-    - владелец
-    - интервал приёма (start/end) как value-object TimePeriod.
-    """
-
     id: QueueId
     owner_id: UserId
     is_active: IsActive

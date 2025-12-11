@@ -1,10 +1,10 @@
 from shared.building_blocks import DomainEvent
 from modules.request.domain.value_objects import (
-    RequestDatetime,
+    RequestPriority,
 )
 from modules.request.domain.aggregates import RequestId
 
 
-class RequestAccepted(DomainEvent):
+class RequestChangedPriority(DomainEvent):
     request_id: RequestId
-    confirmed_datetime: RequestDatetime
+    new_priority: RequestPriority

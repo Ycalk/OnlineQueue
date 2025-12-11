@@ -4,7 +4,7 @@ from modules.queue.domain.aggregates import Queue, QueueId
 
 class IQueueRepository(Protocol):
     async def save(self, queue: Queue) -> None:
-        """Сохранение или обновление пользователя
+        """Сохранение или обновление очереди
 
         Args:
             queue (Queue): очередь

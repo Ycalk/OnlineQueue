@@ -1,17 +1,11 @@
-from datetime import date, time
-
 from shared.building_blocks.event import IEventPublisher
 from shared.building_blocks.use_case import ApplicationUseCase
 
+from modules.request.application.errors import QueueNotFoundError
 from modules.request.domain.commands import CreateRequest as CreateRequestCommand
 from modules.request.domain.ports.inbound import ICreateRequest
 from modules.request.domain.aggregates import Request
 from modules.request.domain.ports.outbound import IRequestRepository
-from modules.request.domain.value_objects import (
-    RequestDateTime,
-    TimePeriod,
-    RequestPriority,
-)
 
 
 class CreateRequest(ApplicationUseCase, ICreateRequest):
@@ -24,33 +18,18 @@ class CreateRequest(ApplicationUseCase, ICreateRequest):
         self._request_repository = request_repository
 
     async def __call__(self, command: CreateRequestCommand) -> Request:
-        preferred_datetime = _build_request_datetime(
-            command.preferred_date,
-            command.preferred_time_start,
-            command.preferred_time_end,
-        )
+        queue = await self._request_repository.find_queue_by_id(command.queue_id)
+        if queue is None:
+            raise QueueNotFoundError(f"Queue with id {command.queue_id} not found")
 
         request = Request.create(
             user_id=command.requester,
-            queue_id=command.queue_id,
+            queue=queue,
             purpose=command.purpose,
-            priority=RequestPriority.MEDIUM,
-            preferred_datetime=preferred_datetime,
+            preferred_datetime=command.preferred_datetime,
         )
 
         await self._request_repository.save(request)
         await self._publish_events(request)
 
         return request
-
-
-def _build_request_datetime(
-    preferred_date: date,
-    preferred_time_start: time,
-    preferred_time_end: time,
-) -> RequestDateTime:
-    time_period = TimePeriod(
-        start_time=preferred_time_start,
-        end_time=preferred_time_end,
-    )
-    return RequestDateTime(date=preferred_date, time_period=time_period)

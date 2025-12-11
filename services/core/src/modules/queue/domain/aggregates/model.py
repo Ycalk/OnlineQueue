@@ -153,14 +153,14 @@ class Queue(AggregateRoot):
         self._add_event(QueueActivated(queue_id=self.id))
 
     def calculate_average_requests_duration_seconds(self) -> int | None:
-        result = 0
+        sum_duration = 0
         count = 0
         for request in self.requests:
             if request.archived:
                 continue
             if (duration := request.calculate_duration_seconds()) is not None:
-                result += duration
+                sum_duration += duration
                 count += 1
         if count == 0:
             return None
-        return round(result / count)
+        return round(sum_duration / count)
