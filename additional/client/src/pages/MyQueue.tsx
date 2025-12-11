@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AppShell,
-  Tabs,
+  SegmentedControl,
   Card,
-  Badge,
   Button,
   TextInput,
   Textarea,
   NumberInput,
   Title,
   Text,
+  Divider,
   Group,
   Stack,
   Container,
@@ -57,7 +58,7 @@ interface ActivityItem {
 }
 
 export const MyQueue: React.FC = () => {
-  const [selectedQueueId, setSelectedQueueId] = useState<number>(1);
+  const [selectedQueueId, setSelectedQueueId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<string | null>('all');
   const [expandedInQueue, setExpandedInQueue] = useState(true);
   const [expandedWaiting, setExpandedWaiting] = useState(true);
@@ -90,6 +91,7 @@ export const MyQueue: React.FC = () => {
       purpose: 'Я уже три года не был в отпуске. Хочу на курорт.',
       timeRange: '16:00 - 19:00',
       duration: 25,
+      email: 'olegoleg@gmail.com',
     },
     {
       id: 3,
@@ -97,37 +99,64 @@ export const MyQueue: React.FC = () => {
       title: 'Получение премии',
       purpose: 'Получить премию за сентябрь',
       duration: 0,
+      email: 'ekaterina@gmail.com',
     },
   ];
 
-  const activityData: ActivityItem[] = [
-    {
-      id: 1,
-      person: 'Петров Петр Петрович',
-      action: 'Добавился в очередь Устройство в штаб',
-      time: '2 часа назад',
-    },
-    {
-      id: 2,
-      person: 'Иванов Иван Иванович',
-      action: 'Утвердил запись на 14:00 часов',
-      time: '1 час назад',
-    },
-    {
-      id: 3,
-      person: 'Иванов Иван Иванович',
-      action: 'Оставил комментарий: возьмите документы с собой',
-      time: '30 минут назад',
-    },
-    {
-      id: 4,
-      person: 'Иванов Иван Иванович',
-      action: 'Завершил приём',
-      time: '10 минут назад',
-    },
-  ];
+  // Активности для каждой карточки
+  const activityDataByQueue: { [key: number]: ActivityItem[] } = {
+    1: [
+      {
+        id: 1,
+        person: 'Петров Петр Петрович',
+        action: 'Добавился в очередь Устройство в штаб',
+        time: '2 часа назад',
+      },
+      {
+        id: 2,
+        person: 'Иванов Иван Иванович',
+        action: 'Утвердил запись на 14:00 часов',
+        time: '1 час назад',
+      },
+      {
+        id: 3,
+        person: 'Иванов Иван Иванович',
+        action: 'Оставил комментарий: возьмите документы с собой',
+        time: '30 минут назад',
+      },
+      {
+        id: 4,
+        person: 'Иванов Иван Иванович',
+        action: 'Завершил приём',
+        time: '10 минут назад',
+      },
+    ],
+    2: [
+      {
+        id: 1,
+        person: 'Олегов Олег Олегович',
+        action: 'Добавился в очередь По поводу отпуска',
+        time: '3 часа назад',
+      },
+      {
+        id: 2,
+        person: 'Иванов Иван Иванович',
+        action: 'Просмотрел заявку',
+        time: '2 часа назад',
+      },
+    ],
+    3: [
+      {
+        id: 1,
+        person: 'Олегова Екатерина Ильина',
+        action: 'Добавилась в очередь Получение премии',
+        time: '1 день назад',
+      },
+    ],
+  };
 
-  const selectedQueue = inQueueData.find((q) => q.id === selectedQueueId);
+  const selectedQueue = [...inQueueData, ...waitingData].find((q) => q.id === selectedQueueId);
+  const activityData = selectedQueueId ? activityDataByQueue[selectedQueueId] || [] : [];
 
   const QueueCard: React.FC<{ item: QueueItem; isSelected?: boolean }> = ({
     item,
@@ -163,9 +192,9 @@ export const MyQueue: React.FC = () => {
             </Text>
           </Stack>
           {item.priority === 'Высокий' && (
-            <Badge size="lg" variant="filled" color="red" style={{ whiteSpace: 'nowrap' }}>
+            <Text size="sm" style={{ whiteSpace: 'nowrap', color: '#C8235A' }}>
               Высокий приоритет
-            </Badge>
+            </Text>
           )}
         </Group>
       </Stack>
@@ -178,35 +207,35 @@ export const MyQueue: React.FC = () => {
             padding="md"
     >
             <AppShell.Header>
-                <Container size="xl" h="100%">
+                <Container size="100%" h="100%">
                     <Group h="100%" px="md" justify="space-between">
                         <Title order={2} c="#e91e63">К Телеком</Title>
                         <Group>
-                            <Button  variant="outline" color='#b9bbb5ff'>Вход</Button>
+                            <Button variant="outline" color='#b9bbb5ff'>Вход</Button>
                             <Button>Регистрация</Button>
                             <Menu shadow="md" width={200}>
-                            <Menu.Target>
-                                <IconMenu2 size={32}/>
-                            </Menu.Target>
+                                <Menu.Target>
+                                    <IconMenu2 size={32}/>
+                                </Menu.Target>
 
-                            <Menu.Dropdown>
-                                <Menu.Item leftSection={<IconClipboardText size={16} />}>
-                                    Доступные очереди
-                                </Menu.Item>
-                                <Menu.Item leftSection={<IconFriends size={16} />}>
-                                    Мои очереди
-                                </Menu.Item>
-                                <Menu.Item leftSection={<IconChecklist size={16} />}>
-                                    Мои заявки
-                                </Menu.Item>
-                                <Menu.Item leftSection={<IconBellRinging size={16} />}>
-                                    Настройки уведомлений
-                                </Menu.Item>
-                                <Menu.Item color="red" leftSection={<IconTransitionLeft size={16} />}>
-                                    Выход
-                                </Menu.Item>
-                            </Menu.Dropdown>
-                        </Menu>
+                                <Menu.Dropdown style={{zIndex: 1001}}>
+                                    <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
+                                        Доступные очереди
+                                    </Menu.Item>
+                                    <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
+                                        Мои очереди
+                                    </Menu.Item>
+                                    <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
+                                        Мои заявки
+                                    </Menu.Item>
+                                    <Menu.Item leftSection={<IconBellRinging size={16} />}>
+                                        Настройки уведомлений
+                                    </Menu.Item>
+                                    <Menu.Item color="red" leftSection={<IconTransitionLeft size={16} />}>
+                                        Выход
+                                    </Menu.Item>
+                                </Menu.Dropdown>
+                            </Menu>
                         </Group>
                     </Group>
                 </Container>
@@ -214,15 +243,17 @@ export const MyQueue: React.FC = () => {
 
     <AppShell.Main>
         
-        <Container size="xl" py="xl">
-            <Title order={1} mb="xl">Мои очереди</Title>
+        <Container size="80%" py="md">
+            <Title order={1} mb="lg">Мои очереди</Title>
+
+            <Divider size={2} my="sm" />
 
             <Box
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
               gap: '20px',
-              height: '100%',
+              height: 'calc(100vh - 214px)',
             }}
           >
 
@@ -233,23 +264,26 @@ export const MyQueue: React.FC = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100%',
+                overflow: 'hidden',
               }}
             >
-              <Group grow mb="md">
-                <Tabs value={activeTab} onChange={setActiveTab} style={{ flex: 1 }}>
-                  <Tabs.List grow>
-                    <Tabs.Tab value="all">Все</Tabs.Tab>
-                    <Tabs.Tab value="queue">Очередь</Tabs.Tab>
-                    <Tabs.Tab value="waiting">Ожидание</Tabs.Tab>
-                  </Tabs.List>
-                </Tabs>
+              <Group mb="md" align="flex-start">
+                <SegmentedControl
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  data={[
+                    { label: 'Все', value: 'all' },
+                    { label: 'Очередь', value: 'queue' },
+                    { label: 'Ожидание', value: 'waiting' },
+                  ]}
+                  style={{ flex: 1 }}
+                />
+                <Button size="sm" rightSection={<IconChevronDown size={16} />}>
+                  Выбрать очередь
+                </Button>
               </Group>
-              <Button size="sm" rightSection={<IconChevronDown size={16} />} mb="md" fullWidth>
-                Выбрать очередь
-              </Button>
-
-              <ScrollArea style={{ flex: 1, marginRight: -8 }} type="auto">
+              
+              <ScrollArea style={{ flex: 1 }} type="auto">
                 <Stack gap="md" pr="md">
 
                   <Paper withBorder p="md" radius="md">
@@ -273,11 +307,7 @@ export const MyQueue: React.FC = () => {
                     <Collapse in={expandedInQueue}>
                       <Stack gap="md">
                         {inQueueData.map((item) => (
-                          <QueueCard
-                            key={item.id}
-                            item={item}
-                            isSelected={selectedQueueId === item.id}
-                          />
+                          <QueueCard key={item.id} item={item} />
                         ))}
                       </Stack>
                     </Collapse>
@@ -320,11 +350,11 @@ export const MyQueue: React.FC = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100%',
+                overflow: 'hidden',
               }}
             >
-              <ScrollArea style={{ flex: 1, marginRight: -8 }} type="auto">
-                {selectedQueue && (
+              <ScrollArea style={{ flex: 1 }} type="auto">
+                {selectedQueue ? (
                   <Stack gap="md" pr="md">
                     <div>
                       <Title order={2}>{selectedQueue.name}</Title>
@@ -351,17 +381,21 @@ export const MyQueue: React.FC = () => {
 
                     <div>
                       <Text size="sm">
-                        <strong>Дата и время посещения:</strong> {selectedQueue.date}{' '}
-                        {selectedQueue.time} - {selectedQueue.endTime}
+                        <strong>Желаемые дата и время посещения:</strong> 
+                        <p>{selectedQueue.date}{' '}
+                        {selectedQueue.time} - {selectedQueue.endTime}</p>
                       </Text>
                     </div>
 
-                    <Button
-                      leftSection={<IconDownload size={16} />}
-                      fullWidth
-                    >
-                      Скачать приложенный файл
-                    </Button>
+                    {selectedQueue.hasAttachment && (
+                      <Group justify="start" mb="md">
+                        <Button
+                          leftSection={<IconDownload size={16} />}
+                        >
+                          Скачать приложенный файл
+                        </Button>
+                      </Group>
+                    )}
 
                     <Stack gap="sm">
                       <TextInput
@@ -370,38 +404,27 @@ export const MyQueue: React.FC = () => {
                         onChange={(e) => setEditDate(e.currentTarget.value)}
                       />
 
-                      <div>
-                        <Text size="sm" fw={600} mb={8}>
+                      <Stack gap="xs">
+                        <Text size="md" fw={600}>
                           Приоритет
                         </Text>
-                        <Group>
-                          {['Низкий', 'Средний', 'Высокий'].map((priority) => (
-                            <Button
-                              key={priority}
-                              variant={selectedPriority === priority ? 'filled' : 'default'}
-                              color={selectedPriority === priority ? '' : 'gray'}
-                              size="sm"
-                              onClick={() => setSelectedPriority(priority)}
-                            >
-                              {priority}
-                            </Button>
-                          ))}
-                        </Group>
-                      </div>
+                        <SegmentedControl 
+                          value={selectedPriority}
+                          onChange={setSelectedPriority}
+                          data={[
+                            { label: 'Низкий', value: 'Низкий' },
+                            { label: 'Средний', value: 'Средний' },
+                            { label: 'Высокий', value: 'Высокий' },
+                          ]}
+                          fullWidth
+                        />
+                      </Stack>
 
                       <NumberInput
                         label="Длительность визита в минутах"
                         value={duration}
                         onChange={(val) => setDuration(val as number)}
                         min={1}
-                      />
-
-                      <Textarea
-                        label="Комментарий"
-                        placeholder="Добавить комментарий..."
-                        value={comment}
-                        onChange={(e) => setComment(e.currentTarget.value)}
-                        minRows={4}
                       />
                     </Stack>
 
@@ -414,6 +437,10 @@ export const MyQueue: React.FC = () => {
                       </Button>
                     </Group>
                   </Stack>
+                ) : (
+                  <Text c="gray.5" ta="center" mt="xl">
+                    Выберите заявку для просмотра деталей
+                  </Text>
                 )}
               </ScrollArea>
             </Paper>
@@ -425,7 +452,7 @@ export const MyQueue: React.FC = () => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100%',
+                overflow: 'hidden',
               }}
             >
               <Group justify="space-between" mb="md">
@@ -438,24 +465,43 @@ export const MyQueue: React.FC = () => {
                 </Button>
               </Group>
 
-              <ScrollArea style={{ flex: 1, marginRight: -8 }} type="auto">
-                <div style={{ paddingRight: 8 }}>
-                  <Timeline active={activityData.length} bulletSize={20} lineWidth={4}>
-                    {activityData.map((item) => (
-                      <Timeline.Item
-                        key={item.id}
-                        title={<Text fw={600}>{item.person}</Text>}
-                      >
-                        <Text c="dimmed" size="sm" mt={4}>
-                          {item.action}
-                        </Text>
-                        <Text size="xs" mt={4} c="gray.5">
-                          {item.time}
-                        </Text>
-                      </Timeline.Item>
-                    ))}
-                  </Timeline>
-                </div>
+              <ScrollArea style={{ flex: 1 }} type="auto">
+                {selectedQueue && activityData.length > 0 ? (
+                  <Box pr="md">
+                    <Timeline active={activityData.length} bulletSize={20} lineWidth={4}>
+                      {activityData.map((item) => (
+                        <Timeline.Item
+                          key={item.id}
+                          title={<Text fw={600}>{item.person}</Text>}
+                        >
+                          <Text c="dimmed" size="sm" mt={4}>
+                            {item.action}
+                          </Text>
+                          <Text size="xs" mt={4} c="gray.5">
+                            {item.time}
+                          </Text>
+                        </Timeline.Item>
+                      ))}
+                    </Timeline>
+                    
+                    <Stack gap="sm" mt="md">
+                      <Text size="sm" fw={600}>
+                        Комментарий
+                      </Text>
+                      <Textarea
+                        placeholder="Укажите важные детали или пожелания"
+                        value={comment}
+                        onChange={(e) => setComment(e.currentTarget.value)}
+                        minRows={3}
+                        size="sm"
+                      />
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Text c="gray.5" ta="center" mt="xl">
+                    Выберите заявку для просмотра активности
+                  </Text>
+                )}
               </ScrollArea>
             </Paper>
           </Box>

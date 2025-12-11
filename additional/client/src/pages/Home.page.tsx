@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     AppShell,
     Container,
@@ -17,6 +18,7 @@ import {
     Stack,
     Textarea,
     ActionIcon,
+    Divider,
     NumberInput,
 } from '@mantine/core';
 
@@ -177,25 +179,25 @@ function HomePage() {
             padding="md"
         >
             <AppShell.Header>
-                <Container size="xl" h="100%">
+                <Container size="100%" h="100%">
                     <Group h="100%" px="md" justify="space-between">
                         <Title order={2} c="#e91e63">К Телеком</Title>
                         <Group>
-                            <Button variant="outline" color='#b9bbb5ff'>Вход</Button>
-                            <Button>Регистрация</Button>
+                            <Button component={Link} to="/authorization" variant="outline" color='#b9bbb5ff'>Вход</Button>
+                            <Button component={Link} to="/registration">Регистрация</Button>
                             <Menu shadow="md" width={200}>
                                 <Menu.Target>
                                     <IconMenu2 size={32}/>
                                 </Menu.Target>
 
                                 <Menu.Dropdown style={{zIndex: 1001}}>
-                                    <Menu.Item leftSection={<IconClipboardText size={16} />}>
+                                    <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
                                         Доступные очереди
                                     </Menu.Item>
-                                    <Menu.Item leftSection={<IconFriends size={16} />}>
+                                    <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
                                         Мои очереди
                                     </Menu.Item>
-                                    <Menu.Item leftSection={<IconChecklist size={16} />}>
+                                    <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
                                         Мои заявки
                                     </Menu.Item>
                                     <Menu.Item leftSection={<IconBellRinging size={16} />}>
@@ -212,23 +214,27 @@ function HomePage() {
             </AppShell.Header>
 
             <AppShell.Main>
-                <Container size="xl" py="md">
+                <Container size="80%" py="md">
                     <Title order={1} mb="lg">Доступные очереди</Title>
 
                     <Group mb="lg" justify='space-between'>
                         <Group>
                             <TextInput
                                 placeholder="Поиск по названию, имени и т.д."
-                                style={{ flex: 1, maxWidth: 404 }}
+                                style={{ width: 404 }}
                                 value={search}
                                 onChange={(e) => setSearch(e.currentTarget.value)}
                             />
-                            <Button justify="center"> <IconSearch size={20} /> </Button>
+                            <Button>
+                                <IconSearch size={20} />
+                            </Button>
                         </Group>
                         <Button leftSection={<IconPlus size={16} />} onClick={() => setShowCreateQueue(true)}>
                             Создать очередь
                         </Button>
                     </Group>
+
+                    <Divider size={2} my="sm" />
 
                     <Box style={{ position: 'relative' }}>
                         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
@@ -282,7 +288,7 @@ function HomePage() {
                                     position: 'absolute',
                                     right: 0,
                                     top: 0,
-                                    width: `414px`,
+                                    width: `33%`,
                                     height: `730px`,
                                     backgroundColor: 'white',
                                     boxShadow: '-2px 0 8px rgba(0, 0, 0, 0.15)',
@@ -291,7 +297,7 @@ function HomePage() {
                                     overflow: 'hidden',
                                 }}
                             >
-                                <ScrollArea>
+                                <ScrollArea style={{ height: '100%' }}>
                                     <Paper p="lg">
                                         <Group justify="space-between" mb="md">
                                             <Title order={3}>Об очереди</Title>
@@ -337,22 +343,26 @@ function HomePage() {
                                                 <Title order={5} mb="md">Заполните данные</Title>
 
                                                 <Stack gap="sm">
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
+                                                        Дата и время начала посещения <span style={{ color: '#FA5252' }}>*</span>
+                                                    </Text>
                                                     <TextInput
-                                                        label="Дата и время начала посещения *"
                                                         placeholder="Укажите время начала посещения"
                                                         value={appointmentDate}
                                                         onChange={(e) => setAppointmentDate(e.currentTarget.value)}
                                                     />
-
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
+                                                        Время окончания посещения <span style={{ color: '#FA5252' }}>*</span>
+                                                    </Text>
                                                     <TextInput
-                                                        label="Время окончания посещения *"
                                                         placeholder="Укажите время до которого вы готовы быть на приёме, например, 14:00"
                                                         value={appointmentTime}
                                                         onChange={(e) => setAppointmentTime(e.currentTarget.value)}
                                                     />
-
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
+                                                        Цель <span style={{ color: '#FA5252' }}>*</span>
+                                                    </Text>
                                                     <Textarea
-                                                        label="Цель *"
                                                         placeholder="Укажите цель визита"
                                                         value={visitPurpose}
                                                         onChange={(e) => setVisitPurpose(e.currentTarget.value)}
@@ -410,7 +420,7 @@ function HomePage() {
                                     position: 'absolute',
                                     right: 0,
                                     top: 0,
-                                    width: `414px`,
+                                    width: `33%`,
                                     height: `730px`,
                                     backgroundColor: 'white',
                                     boxShadow: '-2px 0 8px rgba(0, 0, 0, 0.15)',
@@ -511,7 +521,7 @@ function HomePage() {
                                                 </Stack>
                                             </div>
 
-                                            <Group grow pt="md">
+                                            <Group justify="end" mb="md">
                                                 <Button
                                                     onClick={handleCreateQueue}
                                                 >
