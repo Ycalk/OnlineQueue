@@ -1,21 +1,20 @@
-from datetime import datetime
-from uuid import UUID
-
 from shared.building_blocks import DomainEvent
+from modules.request.domain.aggregates import RequestId
 from modules.request.domain.value_objects import (
-    RequestId,
+    RequestPriority,
+    RequestDatetime,
+    RequestStatus,
     UserId,
     QueueId,
-    RequestPriority,
-    RequestDateTime,
+    Purpose,
 )
 
 
 class RequestCreated(DomainEvent):
-    request_id: UUID
-    user_id: UUID
-    queue_id: UUID
+    request_id: RequestId
+    user_id: UserId
+    queue_id: QueueId
+    purpose: Purpose
+    preferred_datetime: RequestDatetime
     priority: RequestPriority
-    created_at: datetime
-    # Заявка может быть создана без конкретной даты/интервала
-    desired_datetime: RequestDateTime | None = None
+    status: RequestStatus

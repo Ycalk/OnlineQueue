@@ -2,10 +2,10 @@ from shared.building_blocks import DomainUseCase
 
 from modules.request.domain.commands import (
     CreateRequest,
-    UpdateRequestTime,
+    UpdateRequestConfirmationDatetime,
     UpdateRequestPriority,
-    UpdateRequestStatus,
-    ArchiveRequest,
+    RejectRequest,
+    AddComment,
 )
 from modules.request.domain.aggregates.model import Request
 
@@ -14,7 +14,9 @@ from modules.request.domain.aggregates.model import Request
 ICreateRequest = DomainUseCase[CreateRequest, Request]
 
 # Остальные команды изменяют состояние и ничего не возвращают
-IUpdateRequestTime = DomainUseCase[UpdateRequestTime, None]
+IUpdateRequestConfirmationDatetime = DomainUseCase[
+    UpdateRequestConfirmationDatetime, None
+]
 IUpdateRequestPriority = DomainUseCase[UpdateRequestPriority, None]
-IUpdateRequestStatus = DomainUseCase[UpdateRequestStatus, None]
-IArchiveRequest = DomainUseCase[ArchiveRequest, None]
+IRejectRequest = DomainUseCase[RejectRequest, None]
+IAddComment = DomainUseCase[AddComment, None]

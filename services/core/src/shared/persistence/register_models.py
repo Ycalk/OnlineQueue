@@ -34,20 +34,27 @@ async def register_models(connection: AsyncConnection, sqlite_mode=False) -> lis
 
     from modules.request.adapters.outbound.persistence.models import (
         Queue as RequestQueue,
-        RequestModel as RequestRequest,
-        RequestStatusHistoryItemModel as RequestStatusHistoryItemReq,
-        RequestConfirmationHistoryItemModel as RequestConfirmationHistoryItemReq,
+        Request as RequestRequest,
+        RequestStatusHistoryItem,
+        RequestPriorityHistoryItem,
+        RequestConfirmationDatetimeHistoryItem,
+        Comment,
     )
 
     if (
-        RequestQueue.__table__.schema is None
-        or RequestRequest.__table__.schema is None
-        or RequestStatusHistoryItemReq.__table__.schema is None
-        or RequestConfirmationHistoryItemReq.__table__.schema is None
+        RequestRequest.__table__.schema is None
+        or RequestQueue.__table__.schema is None
+        or RequestStatusHistoryItem.__table__.schema is None
+        or RequestPriorityHistoryItem.__table__.schema is None
+        or RequestConfirmationDatetimeHistoryItem.__table__.schema is None
+        or Comment.__table__.schema is None
         or RequestQueue.__table__.schema != RequestRequest.__table__.schema
-        or RequestQueue.__table__.schema != RequestStatusHistoryItemReq.__table__.schema
-        or RequestQueue.__table__.schema
-        != RequestConfirmationHistoryItemReq.__table__.schema
+        or RequestStatusHistoryItem.__table__.schema != RequestRequest.__table__.schema
+        or RequestPriorityHistoryItem.__table__.schema
+        != RequestRequest.__table__.schema
+        or RequestConfirmationDatetimeHistoryItem.__table__.schema
+        != RequestRequest.__table__.schema
+        or Comment.__table__.schema != RequestRequest.__table__.schema
     ):
         raise RuntimeError("Models from request bc must have the same schema")
     if sqlite_mode:
@@ -62,6 +69,8 @@ async def register_models(connection: AsyncConnection, sqlite_mode=False) -> lis
         Request,
         RequestQueue,
         RequestRequest,
-        RequestStatusHistoryItemReq,
-        RequestConfirmationHistoryItemReq,
+        RequestStatusHistoryItem,
+        RequestPriorityHistoryItem,
+        RequestConfirmationDatetimeHistoryItem,
+        Comment,
     ]

@@ -1,6 +1,6 @@
-from shared.building_blocks import DomainEvent
+from ._base import BaseCommand
 from modules.request.domain.aggregates import RequestId
 
 
-class RequestRejected(DomainEvent):
+class RejectRequest(BaseCommand):
     request_id: RequestId

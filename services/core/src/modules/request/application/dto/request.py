@@ -2,15 +2,21 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from modules.request.domain.value_objects import RequestStatus, RequestPriority
+from modules.request.domain.value_objects import (
+    RequestStatus,
+    RequestPriority,
+    Comment,
+    RequestStatusHistoryItem,
+    RequestPriorityHistoryItem,
+)
 
 
-class StatusHistoryItem(BaseModel):
-    status: RequestStatus
-    updated_at: int  # UNIX timestamp
+class RequestDatetime(BaseModel):
+    """
+    start_unix и end_unix эквивалентны date, time_start и time_end
+    только в unix timestamp формате, также они имеют одинаковую дату
+    """
 
-
-class ConfirmationHistoryItem(BaseModel):
     date: str = Field(
         description="Дата записи (формат: YYYY-MM-DD)",
         pattern=r"^\d{4}-\d{2}-\d{2}$",
@@ -26,7 +32,13 @@ class ConfirmationHistoryItem(BaseModel):
         pattern=r"^([01]\d|2[0-3]):([0-5]\d)$",
         examples=["18:30"],
     )
-    updated_at: int  # UNIX timestamp, когда была зафиксирована эта запись истории
+
+    start_unix: int = Field(description="Unix timestamp времени начала")
+    end_unix: int = Field(description="Unix timestamp времени окончания")
+
+
+class ConfirmationDatetimeHistoryItem(RequestDatetime):
+    occurred_at: int
 
 
 class Request(BaseModel):
@@ -36,47 +48,14 @@ class Request(BaseModel):
     user_id: UUID
     queue_id: UUID
 
-    # Предпочтительное время (из create-команды)
-    preferred_date: str | None = Field(
-        default=None,
-        description="Предпочтительная дата (YYYY-MM-DD)",
-        pattern=r"^\d{4}-\d{2}-\d{2}$",
-    )
-    preferred_time_start: str | None = Field(
-        default=None,
-        description="Предпочтительное время начала (HH:MM)",
-        pattern=r"^([01]\d|2[0-3]):([0-5]\d)$",
-    )
-    preferred_time_end: str | None = Field(
-        default=None,
-        description="Предпочтительное время окончания (HH:MM)",
-        pattern=r"^([01]\d|2[0-3]):([0-5]\d)$",
-    )
+    preferred_datetime: RequestDatetime
+    confirmed_datetime: RequestDatetime | None
 
-    # Текущее подтверждённое время (удобно для UI),
-    # вычисляется как последнее из confirmation_history
-    confirmed_date: str | None = Field(
-        default=None,
-        description="Подтверждённая дата (YYYY-MM-DD)",
-        pattern=r"^\d{4}-\d{2}-\d{2}$",
-    )
-    confirmed_time_start: str | None = Field(
-        default=None,
-        description="Подтверждённое время начала (HH:MM)",
-        pattern=r"^([01]\d|2[0-3]):([0-5]\d)$",
-    )
-    confirmed_time_end: str | None = Field(
-        default=None,
-        description="Подтверждённое время окончания (HH:MM)",
-        pattern=r"^([01]\d|2[0-3]):([0-5]\d)$",
-    )
-
-    confirmation_history: list[ConfirmationHistoryItem]
-    status_history: list[StatusHistoryItem]
+    confirmation_datetime_history: list[ConfirmationDatetimeHistoryItem]
+    status_history: list[RequestStatusHistoryItem]
+    priority_history: list[RequestPriorityHistoryItem]
+    comments: list[Comment]
 
     is_archived: bool
     priority: RequestPriority
     status: RequestStatus
-
-    created_at: int          # UNIX timestamp
-    updated_at: int | None   # UNIX timestamp или None

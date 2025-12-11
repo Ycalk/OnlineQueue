@@ -10,28 +10,28 @@ from modules.request.adapters.outbound.persistence.request_reader import Request
 
 from modules.request.application.use_cases import (
     CreateRequest,
-    UpdateRequestTime,
+    UpdateRequestConfirmationDatetime,
     UpdateRequestPriority,
-    UpdateRequestStatus,
-    ArchiveRequest,
+    AddComment,
+    RejectRequest,
 )
 from modules.request.domain.ports.inbound import (
     ICreateRequest,
-    IUpdateRequestTime,
+    IUpdateRequestConfirmationDatetime,
     IUpdateRequestPriority,
-    IUpdateRequestStatus,
-    IArchiveRequest,
+    IAddComment,
+    IRejectRequest,
 )
 
 from shared.building_blocks.event import IEventPublisher
 from modules.request.application.ports.inbound.queries import (
-    IGetRequestList,
+    IGetQueueOwnerRequests,
     IGetRequest,
     IGetUserRequests,
     IGetQueueRequests,
 )
 from modules.request.application.queries import (
-    GetRequestList,
+    GetQueueOwnerRequests,
     GetRequest,
     GetUserRequests,
     GetQueueRequests,
@@ -58,14 +58,6 @@ class RequestProvider(Provider):
         return CreateRequest(event_publisher, request_repository)
 
     @provide(scope=Scope.REQUEST)
-    def get_update_request_time_use_case(
-        self,
-        event_publisher: IEventPublisher,
-        request_repository: IRequestRepository,
-    ) -> IUpdateRequestTime:
-        return UpdateRequestTime(event_publisher, request_repository)
-
-    @provide(scope=Scope.REQUEST)
     def get_update_request_priority_use_case(
         self,
         event_publisher: IEventPublisher,
@@ -74,26 +66,37 @@ class RequestProvider(Provider):
         return UpdateRequestPriority(event_publisher, request_repository)
 
     @provide(scope=Scope.REQUEST)
-    def get_update_request_status_use_case(
+    def get_update_request_confirmation_datetime_use_case(
         self,
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
-    ) -> IUpdateRequestStatus:
-        return UpdateRequestStatus(event_publisher, request_repository)
+    ) -> IUpdateRequestConfirmationDatetime:
+        return UpdateRequestConfirmationDatetime(event_publisher, request_repository)
 
     @provide(scope=Scope.REQUEST)
-    def get_archive_request_use_case(
+    def get_add_comment_use_case(
         self,
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
-    ) -> IArchiveRequest:
-        return ArchiveRequest(event_publisher, request_repository)
+    ) -> IAddComment:
+        return AddComment(event_publisher, request_repository)
+
+    @provide(scope=Scope.REQUEST)
+    def get_reject_request_use_case(
+        self,
+        event_publisher: IEventPublisher,
+        request_repository: IRequestRepository,
+    ) -> IRejectRequest:
+        return RejectRequest(event_publisher, request_repository)
 
     # ---------- queries ----------
 
     @provide(scope=Scope.REQUEST)
-    def get_get_request_list_query(self, reader: IRequestReader) -> IGetRequestList:
-        return GetRequestList(reader)
+    def get_get_queue_owner_requests_query(
+        self,
+        reader: IRequestReader,
+    ) -> IGetQueueOwnerRequests:
+        return GetQueueOwnerRequests(reader)
 
     @provide(scope=Scope.REQUEST)
     def get_get_request_query(self, reader: IRequestReader) -> IGetRequest:

@@ -1,5 +1,6 @@
 from ._base import BaseCommand
-from modules.request.domain.value_objects import RequestId, RequestPriority
+from modules.request.domain.value_objects import RequestPriority
+from modules.request.domain.aggregates import RequestId
 
 
 class UpdateRequestPriority(BaseCommand):

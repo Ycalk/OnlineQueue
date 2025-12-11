@@ -1,6 +1,16 @@
-class RequestDomainError(Exception):
-    """Базовое исключение для bounded context request."""
+from shared.building_blocks import DomainException
 
 
-class TimePeriodNotValid(RequestDomainError):
-    """Неверный интервал времени (start > end)."""
+class RejectedRequestIsFrozen(DomainException): ...
+
+
+class ArchivedRequestIsFrozen(DomainException): ...
+
+
+class PreferredVisitingTimeMustBeInsideQueueReceptionTime(DomainException): ...
+
+
+class CannotCreateRequestToInactiveQueue(DomainException): ...
+
+
+class TimePeriodNotValid(DomainException): ...

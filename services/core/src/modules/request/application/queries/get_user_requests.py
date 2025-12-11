@@ -1,13 +1,14 @@
-from modules.request.application.ports.outbound.request_reader import IRequestReader
 from modules.request.application.ports.inbound.queries import IGetUserRequests
-from modules.request.application.dto import Request, GetUserRequests as GetUserRequestsDto
-from ._mapping import map_request
+from modules.request.application.dto import (
+    Request,
+    GetUserRequests as GetUserRequestsQuery,
+)
+from ._base import BaseRequestQuery
 
 
-class GetUserRequests(IGetUserRequests):
-    def __init__(self, request_reader: IRequestReader):
-        self._request_reader = request_reader
-
-    async def __call__(self, request: GetUserRequestsDto) -> list[Request]:
-        requests = await self._request_reader.find_by_user_id(request.user_id)
-        return [map_request(r) for r in requests]
+class GetUserRequests(BaseRequestQuery, IGetUserRequests):
+    async def __call__(self, request: GetUserRequestsQuery) -> list[Request]:
+        requests = await self._request_reader.get_by_user_id(
+            request.user_id, request.skip, request.limit
+        )
+        return [self._request_to_dto(request) for request in requests]

@@ -2,6 +2,6 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class GetQueueRequests(BaseModel):
-    queue_id: UUID
+class GetRequest(BaseModel):
+    request_id: UUID
     requester_id: UUID

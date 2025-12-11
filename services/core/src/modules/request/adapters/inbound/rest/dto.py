@@ -1,9 +1,9 @@
-from datetime import date, time
+from datetime import date, time, timedelta, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from modules.request.domain.value_objects import RequestPriority, RequestStatus
+from modules.request.domain.value_objects import RequestPriority
 
 
 class CreateRequestRequest(BaseModel):
@@ -56,9 +56,8 @@ class CreateRequestRequest(BaseModel):
         hour, minute = map(int, self.preferred_time_end.split(":"))
         return time(hour=hour, minute=minute)
 
-from datetime import date as DateType
 
-class UpdateRequestTimeRequest(BaseModel):
+class UpdateRequestConfirmationDatetime(BaseModel):
     date: str = Field(
         description="Дата записи (формат: YYYY-MM-DD)",
         pattern=r"^\d{4}-\d{2}-\d{2}$",
@@ -90,23 +89,21 @@ class UpdateRequestTimeRequest(BaseModel):
         except (ValueError, AttributeError):
             raise ValueError("Time must be in HH:MM format (e.g., 18:00)")
 
-    def get_date(self) -> DateType:
-        return DateType.fromisoformat(self.date)
+    def get_date(self):
+        return date.fromisoformat(self.date)
 
     def get_time_start(self) -> time:
         hour, minute = map(int, self.time_start.split(":"))
         return time(hour=hour, minute=minute)
 
+    def get_time_end(self) -> time:
+        start_datetime = datetime.combine(self.get_date(), self.get_time_start())
+        return (start_datetime + timedelta(minutes=self.duration_minutes)).time()
+
 
 class UpdateRequestPriorityRequest(BaseModel):
     new_priority: RequestPriority = Field(
         description="Новый приоритет (low / medium / high)"
-    )
-
-
-class UpdateRequestStatusRequest(BaseModel):
-    new_status: RequestStatus = Field(
-        description="Новый статус (pending / accepted / rejected)"
     )
 
 

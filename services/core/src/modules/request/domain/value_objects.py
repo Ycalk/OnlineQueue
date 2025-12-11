@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import date, time, datetime
 from enum import StrEnum
 from typing import Annotated, Self
@@ -12,6 +10,7 @@ from .errors import TimePeriodNotValid
 
 
 # --- Общие value-объекты (как в queue) ---
+
 
 class Name(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -27,6 +26,15 @@ class Description(BaseModel):
 
     value: Annotated[
         str | None,
+        StringConstraints(min_length=1, max_length=1000, strip_whitespace=True),
+    ]
+
+
+class Purpose(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    value: Annotated[
+        str,
         StringConstraints(min_length=1, max_length=1000, strip_whitespace=True),
     ]
 
@@ -64,21 +72,14 @@ class TimePeriod(BaseModel):
     @model_validator(mode="after")
     def check_start_time_before_end_time(self) -> Self:
         if self.start_time > self.end_time:
-            raise TimePeriodNotValid("Start time must be before end time")
+            raise TimePeriodNotValid("Start time must be less than end time")
         return self
+
+    def is_inside(self, other: "TimePeriod") -> bool:
+        return self.start_time >= other.start_time and self.end_time <= other.end_time
 
 
 class UserId(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    value: UUID = Field(default_factory=uuid4)
-
-    @classmethod
-    def from_uuid(cls, value: UUID) -> Self:
-        return cls(value=value)
-
-
-class RequestId(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     value: UUID = Field(default_factory=uuid4)
@@ -103,7 +104,7 @@ class QueueId(BaseModel):
         return cls(value=value)
 
 
-class RequestDateTime(BaseModel):
+class RequestDatetime(BaseModel):
     """
     Конкретное подтверждённое время записи: дата + интервал.
     """
@@ -124,10 +125,11 @@ class RequestDateTime(BaseModel):
 
 # --- Статус и приоритет заявки ---
 
+
 class RequestStatus(StrEnum):
-    PENDING = "pending"      # в очереди
-    ACCEPTED = "accepted"    # принят
-    REJECTED = "rejected"    # отклонен
+    PENDING = "pending"  # в очереди
+    ACCEPTED = "accepted"  # принят
+    REJECTED = "rejected"  # отклонен
 
 
 class RequestPriority(StrEnum):
@@ -138,14 +140,15 @@ class RequestPriority(StrEnum):
 
 # --- История статусов и подтверждений ---
 
+
 class RequestStatusHistoryItem(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     status: RequestStatus
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    occurred_at: datetime = Field(default_factory=datetime.now)
 
 
-class RequestConfirmationHistoryItem(BaseModel):
+class RequestConfirmationDatetimeHistoryItem(BaseModel):
     """
     Элемент истории подтверждений: когда для заявки назначили
     конкретный интервал времени.
@@ -153,13 +156,29 @@ class RequestConfirmationHistoryItem(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    date: date
-    time_start: time
-    time_end: time
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    confirmation_datetime: RequestDatetime
+    occurred_at: datetime = Field(default_factory=datetime.now)
 
-    @model_validator(mode="after")
-    def check_time_order(self) -> Self:
-        if self.time_start > self.time_end:
-            raise TimePeriodNotValid("Start time must be before end time")
-        return self
+
+class RequestPriorityHistoryItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    priority: RequestPriority
+    occurred_at: datetime = Field(default_factory=datetime.now)
+
+
+class CommentAuthor(StrEnum):
+    VISITER = "visiter"
+    QUEUE_OWNER = "queue_owner"
+
+
+class Comment(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    text: Annotated[
+        str,
+        StringConstraints(min_length=1, max_length=1000, strip_whitespace=True),
+    ]
+
+    author: CommentAuthor
+    created_at: datetime = Field(default_factory=datetime.now)
