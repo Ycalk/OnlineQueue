@@ -183,8 +183,8 @@ function HomePage() {
                     <Group h="100%" px="md" justify="space-between">
                         <Title order={2} c="#e91e63">К Телеком</Title>
                         <Group>
-                            <Button component={Link} to="/authorisation" variant="outline" color='#b9bbb5ff'>Вход</Button>
-                            <Button component={Link} to="/regstration">Регистрация</Button>
+                            <Button component={Link} to="/authorization" variant="outline" color='#b9bbb5ff'>Вход</Button>
+                            <Button component={Link} to="/registration">Регистрация</Button>
                             <Menu shadow="md" width={200}>
                                 <Menu.Target>
                                     <IconMenu2 size={32}/>

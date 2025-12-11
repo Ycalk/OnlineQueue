@@ -23,11 +23,11 @@ const router = createBrowserRouter([
     element: <MyApplication />,
   },
   {
-    path: '/regstration',
+    path: '/registration',
     element: <RegisterPage />,
   },
   {
-    path: '/authorisation',
+    path: '/authorization',
     element: <AuthPage />,
   },
   {

@@ -37,7 +37,7 @@ function ReturnToEnter() {
                     <Stack gap="md">
                         <Text>Пароль успешно обновлен</Text>
 
-                        <Button component={Link} to="/authorisation"
+                        <Button component={Link} to="/authorization"
                             fullWidth
                             mt="md"
                             size="md"
