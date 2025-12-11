@@ -23,15 +23,15 @@ import {
   ScrollArea,
 } from '@mantine/core';
 
-import { 
-    IconClipboardText,
-    IconDownload, 
-    IconFriends, 
-    IconChecklist, 
-    IconBellRinging,
-    IconTransitionLeft,
-    IconMenu2,
-    IconChevronDown,
+import {
+  IconClipboardText,
+  IconDownload,
+  IconFriends,
+  IconChecklist,
+  IconBellRinging,
+  IconTransitionLeft,
+  IconMenu2,
+  IconChevronDown,
 } from '@tabler/icons-react';
 
 interface QueueItem {
@@ -174,7 +174,7 @@ export const MyQueue: React.FC = () => {
       }}
       onClick={() => setSelectedQueueId(item.id)}
     >
-        <Stack gap="xs">
+      <Stack gap="xs">
         <Title order={4}>{item.name}</Title>
         <Text fw={600} size="sm" c="gray.7">
           {item.title}
@@ -203,52 +203,52 @@ export const MyQueue: React.FC = () => {
 
   return (
     <AppShell
-            header={{ height: 70 }}
-            padding="md"
+      header={{ height: 70 }}
+      padding="md"
     >
-            <AppShell.Header>
-                <Container size="100%" h="100%">
-                    <Group h="100%" px="md" justify="space-between">
-                        <Title order={2} c="#e91e63">К Телеком</Title>
-                        <Group>
-                            <Button variant="outline" color='#b9bbb5ff'>Вход</Button>
-                            <Button>Регистрация</Button>
-                            <Menu shadow="md" width={200}>
-                                <Menu.Target>
-                                    <IconMenu2 size={32}/>
-                                </Menu.Target>
+      <AppShell.Header>
+        <Container size="100%" h="100%">
+          <Group h="100%" px="md" justify="space-between">
+            <Title order={2} c="#e91e63">К Телеком</Title>
+            <Group>
+              <Button variant="outline" color='#b9bbb5ff'>Вход</Button>
+              <Button>Регистрация</Button>
+              <Menu shadow="md" width={200}>
+                <Menu.Target>
+                  <IconMenu2 size={32} />
+                </Menu.Target>
 
-                                <Menu.Dropdown style={{zIndex: 1001}}>
-                                    <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
-                                        Доступные очереди
-                                    </Menu.Item>
-                                    <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
-                                        Мои очереди
-                                    </Menu.Item>
-                                    <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
-                                        Мои заявки
-                                    </Menu.Item>
-                                    <Menu.Item leftSection={<IconBellRinging size={16} />}>
-                                        Настройки уведомлений
-                                    </Menu.Item>
-                                    <Menu.Item color="red" leftSection={<IconTransitionLeft size={16} />}>
-                                        Выход
-                                    </Menu.Item>
-                                </Menu.Dropdown>
-                            </Menu>
-                        </Group>
-                    </Group>
-                </Container>
-            </AppShell.Header>
+                <Menu.Dropdown style={{ zIndex: 1001 }}>
+                  <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
+                    Доступные очереди
+                  </Menu.Item>
+                  <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
+                    Мои очереди
+                  </Menu.Item>
+                  <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
+                    Мои заявки
+                  </Menu.Item>
+                  <Menu.Item leftSection={<IconBellRinging size={16} />}>
+                    Настройки уведомлений
+                  </Menu.Item>
+                  <Menu.Item color="red" leftSection={<IconTransitionLeft size={16} />}>
+                    Выход
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+          </Group>
+        </Container>
+      </AppShell.Header>
 
-    <AppShell.Main>
-        
+      <AppShell.Main>
+
         <Container size="80%" py="md">
-            <Title order={1} mb="lg">Мои очереди</Title>
+          <Title order={1} mb="lg">Мои очереди</Title>
 
-            <Divider size={2} my="sm" />
+          <Divider size={2} my="sm" />
 
-            <Box
+          <Box
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
@@ -269,7 +269,7 @@ export const MyQueue: React.FC = () => {
             >
               <Group mb="md" align="flex-start">
                 <SegmentedControl
-                  value={activeTab}
+                  value={activeTab ?? undefined}
                   onChange={setActiveTab}
                   data={[
                     { label: 'Все', value: 'all' },
@@ -282,7 +282,7 @@ export const MyQueue: React.FC = () => {
                   Выбрать очередь
                 </Button>
               </Group>
-              
+
               <ScrollArea style={{ flex: 1 }} type="auto">
                 <Stack gap="md" pr="md">
 
@@ -381,9 +381,9 @@ export const MyQueue: React.FC = () => {
 
                     <div>
                       <Text size="sm">
-                        <strong>Желаемые дата и время посещения:</strong> 
+                        <strong>Желаемые дата и время посещения:</strong>
                         <p>{selectedQueue.date}{' '}
-                        {selectedQueue.time} - {selectedQueue.endTime}</p>
+                          {selectedQueue.time} - {selectedQueue.endTime}</p>
                       </Text>
                     </div>
 
@@ -408,7 +408,7 @@ export const MyQueue: React.FC = () => {
                         <Text size="md" fw={600}>
                           Приоритет
                         </Text>
-                        <SegmentedControl 
+                        <SegmentedControl
                           value={selectedPriority}
                           onChange={setSelectedPriority}
                           data={[
@@ -483,7 +483,7 @@ export const MyQueue: React.FC = () => {
                         </Timeline.Item>
                       ))}
                     </Timeline>
-                    
+
                     <Stack gap="sm" mt="md">
                       <Text size="sm" fw={600}>
                         Комментарий
