@@ -29,6 +29,7 @@ class Request(Base):
     )
 
     status: Mapped[str] = mapped_column(String(50))
+    priority: Mapped[str] = mapped_column(String(50))
     queue: Mapped[Queue] = relationship(back_populates="requests")
 
     def __init__(

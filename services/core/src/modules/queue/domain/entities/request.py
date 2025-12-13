@@ -1,10 +1,11 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 from datetime import datetime
 from modules.queue.domain.value_objects import (
     RequestDateTime,
     RequestStatus,
     UserId,
     RequestId,
+    RequestPriority,
 )
 from modules.queue.domain.errors import NotConsistentFields
 
@@ -22,8 +23,9 @@ class Request(BaseModel):
     preferred_time: RequestDateTime
     confirmed_time: RequestDateTime | None = None
     status: RequestStatus
+    priority: RequestPriority
     archived: bool
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
 
     def archive(self) -> None:
         self.archived = True

@@ -15,6 +15,7 @@ from modules.queue.domain.value_objects import (
     RequestId,
     RequestDateTime,
     RequestStatus,
+    RequestPriority,
 )
 from modules.queue.domain.entities import Request
 
@@ -138,4 +139,5 @@ class QueueRepository(IQueueRepository):
             archived=model.archived,
             created_at=model.created_at,
             status=RequestStatus(value=model.status),
+            priority=RequestPriority(value=model.priority),
         )
