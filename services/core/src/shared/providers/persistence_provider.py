@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from shared.persistence import DATABASE_URL, Base, register_models
+from shared.adapters.persistence import DATABASE_URL, Base, register_models
 from core.settings import settings
 
 
@@ -51,9 +51,4 @@ class PersistenceProvider(Provider):
         self, session_factory: async_sessionmaker[AsyncSession]
     ) -> AsyncIterable[AsyncSession]:
         async with session_factory() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
+            yield session

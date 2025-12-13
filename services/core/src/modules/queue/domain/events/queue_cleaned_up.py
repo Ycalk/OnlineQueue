@@ -1,6 +1,10 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.queue.domain.aggregates import QueueId
 
 
 class QueueCleanedUp(DomainEvent):
-    queue_id: QueueId
+    name: ClassVar[str] = "queue.cleaned_up"
+
+    queue_id: UUID

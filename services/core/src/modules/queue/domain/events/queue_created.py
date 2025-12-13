@@ -1,18 +1,18 @@
+from uuid import UUID
+from datetime import time
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.queue.domain.value_objects import (
-    Name,
-    Description,
-    TimePeriod,
-    CleanupPeriod,
-    UserId,
-)
-from modules.queue.domain.aggregates import QueueId
 
 
 class QueueCreated(DomainEvent):
-    queue_id: QueueId
-    owner_id: UserId
-    name: Name
-    description: Description
-    cleanup_period: CleanupPeriod
-    reception_time: TimePeriod
+    name: ClassVar[str] = "queue.created"
+
+    queue_id: UUID
+    owner_id: UUID
+    queue_name: str
+    description: str | None
+    cleanup_period_days: int
+
+    reception_time_start: time
+    reception_time_end: time

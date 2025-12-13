@@ -18,13 +18,13 @@ async def register_models(connection: AsyncConnection, sqlite_mode=False) -> lis
 
     from modules.queue.adapters.outbound.persistence.models import (
         Queue,
-        Request,
+        QueueRequest,
     )
 
     if (
         Queue.__table__.schema is None
-        or Request.__table__.schema is None
-        or Queue.__table__.schema != Request.__table__.schema
+        or QueueRequest.__table__.schema is None
+        or Queue.__table__.schema != QueueRequest.__table__.schema
     ):
         raise RuntimeError("Models from queue bc must have the same schema")
     if sqlite_mode:
@@ -66,7 +66,7 @@ async def register_models(connection: AsyncConnection, sqlite_mode=False) -> lis
         User,
         TelegramUser,
         Queue,
-        Request,
+        QueueRequest,
         RequestQueue,
         RequestRequest,
         RequestStatusHistoryItem,

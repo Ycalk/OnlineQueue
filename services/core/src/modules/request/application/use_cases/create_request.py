@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from shared.building_blocks.event import IEventPublisher
 from shared.building_blocks.use_case import ApplicationUseCase
 
@@ -16,10 +18,21 @@ class CreateRequest(ApplicationUseCase, ICreateRequest):
     ):
         super().__init__(event_publisher)
         self._request_repository = request_repository
+        self._logger = getLogger("use_case.create_request")
 
     async def __call__(self, command: CreateRequestCommand) -> Request:
+        self._logger.info(
+            (
+                f"Creating request for queue with id {command.queue_id.value} "
+                f"by user with id {command.requester.value}"
+            )
+        )
+
         queue = await self._request_repository.find_queue_by_id(command.queue_id)
         if queue is None:
+            self._logger.info(
+                f"Queue with id {command.queue_id.value} not found: request not created"
+            )
             raise QueueNotFoundError(f"Queue with id {command.queue_id} not found")
 
         request = Request.create(
@@ -30,6 +43,9 @@ class CreateRequest(ApplicationUseCase, ICreateRequest):
         )
 
         await self._request_repository.save(request)
+
         await self._publish_events(request)
 
+        await self._request_repository.commit()
+        self._logger.info(f"Request with id {request.id.value} created successfully")
         return request

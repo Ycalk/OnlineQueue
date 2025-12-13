@@ -43,6 +43,7 @@ class GetOwnerQueues(IGetOwnerQueues):
                         ),
                         archived=request.archived,
                         status=request.status,
+                        priority=request.priority,
                     )
                     for request in queue.requests
                 ],

@@ -5,9 +5,7 @@ from pydantic import BaseModel, Field
 from modules.request.domain.value_objects import (
     RequestStatus,
     RequestPriority,
-    Comment,
-    RequestStatusHistoryItem,
-    RequestPriorityHistoryItem,
+    CommentAuthor,
 )
 
 
@@ -37,8 +35,25 @@ class RequestDatetime(BaseModel):
     end_unix: int = Field(description="Unix timestamp времени окончания")
 
 
-class ConfirmationDatetimeHistoryItem(RequestDatetime):
+class ConfirmationDatetimeHistoryItem(BaseModel):
+    confirmation_datetime: RequestDatetime | None
     occurred_at: int
+
+
+class RequestPriorityHistoryItem(BaseModel):
+    priority: RequestPriority
+    occurred_at: int
+
+
+class RequestStatusHistoryItem(BaseModel):
+    status: RequestStatus
+    occurred_at: int
+
+
+class Comment(BaseModel):
+    text: str
+    author: CommentAuthor
+    created_at: int
 
 
 class Request(BaseModel):

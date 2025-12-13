@@ -10,6 +10,9 @@ from modules.queue.domain.value_objects import (
     TimePeriod,
     RequestStatus,
     UserId,
+    RequestId,
+    RequestDateTime,
+    RequestPriority,
 )
 from modules.queue.domain.entities import Request
 from modules.queue.domain.events import (
@@ -21,11 +24,18 @@ from modules.queue.domain.events import (
     QueueDeactivated,
     RequestArchived,
     QueueCleanedUp,
+    RequestRequeued,
+    RequestRejected,
 )
 from shared.building_blocks import AggregateRoot
 from modules.queue.domain.errors import (
     CannotActivateActiveQueue,
     CannotDeactivateAlreadyDeactivatedQueue,
+    RequestIsNotPending,
+    TimeMustBeInsideQueueReceptionTime,
+    RequestNotFound,
+    RequestIsFrozen,
+    CannotScheduleRequest,
 )
 
 
@@ -59,39 +69,40 @@ class Queue(AggregateRoot):
         )
         queue._add_event(
             QueueCreated(
-                queue_id=queue.id,
-                owner_id=owner_id,
-                name=name,
-                description=description,
-                cleanup_period=cleanup_period,
-                reception_time=reception_time,
+                queue_id=queue.id.value,
+                owner_id=owner_id.value,
+                queue_name=name.value,
+                description=description.value,
+                cleanup_period_days=cleanup_period.value_days,
+                reception_time_start=reception_time.start_time,
+                reception_time_end=reception_time.end_time,
             )
         )
         return queue
 
     def change_name(self, new_name: Name) -> None:
         event = NameChanged(
-            queue_id=self.id,
-            old_name=self.name,
-            new_name=new_name,
+            queue_id=self.id.value,
+            old_name=self.name.value,
+            new_name=new_name.value,
         )
         self.name = new_name
         self._add_event(event)
 
     def change_description(self, new_description: Description) -> None:
         event = DescriptionChanged(
-            queue_id=self.id,
-            old_description=self.description,
-            new_description=new_description,
+            queue_id=self.id.value,
+            old_description=self.description.value,
+            new_description=new_description.value,
         )
         self.description = new_description
         self._add_event(event)
 
     def change_cleanup_period(self, new_cleanup_period: CleanupPeriod) -> None:
         event = CleanupPeriodChanged(
-            queue_id=self.id,
-            old_cleanup_period=self.cleanup_period,
-            new_cleanup_period=new_cleanup_period,
+            queue_id=self.id.value,
+            old_cleanup_period_days=self.cleanup_period.value_days,
+            new_cleanup_period_days=new_cleanup_period.value_days,
         )
         self.cleanup_period = new_cleanup_period
         self._add_event(event)
@@ -107,8 +118,8 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
@@ -116,8 +127,8 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
@@ -130,13 +141,13 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
 
-        self._add_event(QueueCleanedUp(queue_id=self.id))
+        self._add_event(QueueCleanedUp(queue_id=self.id.value))
 
     def deactivate(self) -> None:
         if not self.is_active.value:
@@ -144,13 +155,18 @@ class Queue(AggregateRoot):
                 f"Queue {self.id.value} is already deactivated"
             )
         self.is_active = IsActive(value=False)
-        self._add_event(QueueDeactivated(queue_id=self.id))
+        for request in self.requests:
+            if request.status == RequestStatus.REJECTED or request.archived:
+                continue
+            request.reject()
+            self._add_event(RequestRejected(request_id=request.id.value))
+        self._add_event(QueueDeactivated(queue_id=self.id.value))
 
     def activate(self) -> None:
         if self.is_active.value:
             raise CannotActivateActiveQueue(f"Queue {self.id.value} is already active")
         self.is_active = IsActive(value=True)
-        self._add_event(QueueActivated(queue_id=self.id))
+        self._add_event(QueueActivated(queue_id=self.id.value))
 
     def calculate_average_requests_duration_seconds(self) -> int | None:
         sum_duration = 0
@@ -164,3 +180,128 @@ class Queue(AggregateRoot):
         if count == 0:
             return None
         return round(sum_duration / count)
+
+    # Event handlers
+    def on_request_created(self, request: Request) -> None:
+        if request.status != RequestStatus.PENDING:
+            raise RequestIsNotPending(
+                f"Can only add requests with status PENDING, got {request.status}"
+            )
+        if not request.preferred_time.time_period.is_inside(self.reception_time):
+            raise TimeMustBeInsideQueueReceptionTime(
+                "Preferred visiting time must be inside queue reception time"
+            )
+        self.requests.append(request)
+
+    def _can_displace(self, candidate: Request, incumbent: Request) -> bool:
+        """
+        Определяет, может ли кандидат (новая/изменяемая заявка) вытеснить существующую (incumbent).
+        Правила:
+        - Если приоритет кандидата выше -> True.
+        - Если приоритет одинаковый -> смотрим на created_at (кто старее, тот и прав).
+           Если кандидат создан раньше (более старый), то он вытесняет -> True.
+        - Иначе -> False.
+        """
+        priority_map = {
+            RequestPriority.HIGH: 3,
+            RequestPriority.MEDIUM: 2,
+            RequestPriority.LOW: 1,
+        }
+        return priority_map[candidate.priority] > priority_map[incumbent.priority] or (
+            priority_map[candidate.priority] == priority_map[incumbent.priority]
+            and candidate.created_at < incumbent.created_at
+        )
+
+    def on_change_request_confirmed_time(
+        self, request_id: RequestId, confirmed_time: RequestDateTime
+    ) -> None:
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        conflicts: list[Request] = []
+
+        for req in self.requests:
+            if (
+                req.id.value == target_request.id.value
+                or req.status != RequestStatus.ACCEPTED
+                or req.confirmed_time is None
+                or req.archived
+            ):
+                continue
+            if req.confirmed_time.check_intersection(confirmed_time):
+                conflicts.append(req)
+
+        if len(conflicts) == 0:
+            target_request.confirmed_time = confirmed_time
+            target_request.status = RequestStatus.ACCEPTED
+            return
+
+        if all(self._can_displace(target_request, conflict) for conflict in conflicts):
+            for conflict in conflicts:
+                conflict.confirmed_time = None
+                conflict.status = RequestStatus.PENDING
+                self._add_event(
+                    RequestRequeued(
+                        request_id=conflict.id.value,
+                    )
+                )
+            target_request.confirmed_time = confirmed_time
+            target_request.status = RequestStatus.ACCEPTED
+        else:
+            raise CannotScheduleRequest(
+                f"Request {request_id.value} cannot be scheduled due to conflicts."
+            )
+
+    def on_change_request_priority(
+        self, request_id: RequestId, new_priority: RequestPriority
+    ):
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        target_request.priority = new_priority
+
+    def on_request_rejected(self, request_id: RequestId):
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        target_request.status = RequestStatus.REJECTED
+        target_request.archived = True

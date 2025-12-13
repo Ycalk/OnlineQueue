@@ -1,7 +1,7 @@
 from uuid import UUID
 from pydantic import BaseModel, Field
 
-from modules.queue.domain.value_objects import RequestStatus
+from modules.queue.domain.value_objects import RequestStatus, RequestPriority
 
 
 class Queue(BaseModel):
@@ -37,6 +37,7 @@ class Request(BaseModel):
     archived: bool
     created_at: int
     status: RequestStatus
+    priority: RequestPriority
 
 
 class QueueWithRequests(Queue):

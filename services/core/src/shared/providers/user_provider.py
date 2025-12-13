@@ -1,5 +1,6 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from modules.user.domain.ports.outbound import IUserRepository
 from modules.user.adapters.outbound.persistence.user_repository import UserRepository
 from modules.user.application.ports.outbound.user_reader import IUserReader
@@ -38,7 +39,10 @@ class UserProvider(Provider):
         event_publisher: IEventPublisher,
         user_repository: IUserRepository,
     ) -> ICreateUser:
-        return CreateUser(event_publisher, user_repository)
+        return CreateUser(
+            event_publisher,
+            user_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_login_use_case(
@@ -46,7 +50,10 @@ class UserProvider(Provider):
         event_publisher: IEventPublisher,
         user_repository: IUserRepository,
     ) -> ILogin:
-        return Login(event_publisher, user_repository)
+        return Login(
+            event_publisher,
+            user_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_password_use_case(
@@ -54,7 +61,10 @@ class UserProvider(Provider):
         event_publisher: IEventPublisher,
         user_repository: IUserRepository,
     ) -> IChangePassword:
-        return ChangePassword(event_publisher, user_repository)
+        return ChangePassword(
+            event_publisher,
+            user_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_name_use_case(
@@ -62,7 +72,10 @@ class UserProvider(Provider):
         event_publisher: IEventPublisher,
         user_repository: IUserRepository,
     ) -> IChangeName:
-        return ChangeName(event_publisher, user_repository)
+        return ChangeName(
+            event_publisher,
+            user_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_email_use_case(
@@ -70,7 +83,10 @@ class UserProvider(Provider):
         event_publisher: IEventPublisher,
         user_repository: IUserRepository,
     ) -> IChangeEmail:
-        return ChangeEmail(event_publisher, user_repository)
+        return ChangeEmail(
+            event_publisher,
+            user_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_user_query(self, reader: IUserReader) -> IGetUser:

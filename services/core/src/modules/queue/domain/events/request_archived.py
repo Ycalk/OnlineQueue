@@ -1,9 +1,13 @@
+from uuid import UUID
 from datetime import datetime
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.queue.domain.value_objects import RequestId, UserId
 
 
 class RequestArchived(DomainEvent):
-    request_id: RequestId
-    user_id: UserId
+    name: ClassVar[str] = "queue.request.archived"
+
+    request_id: UUID
+    user_id: UUID
     request_created_at: datetime

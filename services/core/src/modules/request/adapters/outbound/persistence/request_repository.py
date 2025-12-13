@@ -47,7 +47,7 @@ class RequestRepository(IRequestRepository):
         )
         result = await self._session.execute(stmt)
         request_model = self._to_orm(request, result.scalar_one_or_none())
-        self._session.add(request_model)
+        await self._session.merge(request_model)
 
         await self._session.flush()
 
@@ -86,6 +86,14 @@ class RequestRepository(IRequestRepository):
 
         return self._queue_to_domain(queue_model)
 
+    async def save_queue(self, queue: Queue) -> None:
+        queue_model = self._queue_to_orm(queue)
+        self._session.add(queue_model)
+        await self._session.flush()
+
+    async def commit(self) -> None:
+        await self._session.commit()
+
     def _to_orm(
         self, aggregate: RequestAggregate, schema: RequestSchema | None = None
     ) -> RequestSchema:
@@ -115,9 +123,15 @@ class RequestRepository(IRequestRepository):
             result.confirmation_datetime_history = [
                 RequestConfirmationHistoryItemSchema(
                     request=result,
-                    date=item.confirmation_datetime.date,
-                    time_start=item.confirmation_datetime.time_period.start_time,
-                    time_end=item.confirmation_datetime.time_period.end_time,
+                    date=item.confirmation_datetime.date
+                    if item.confirmation_datetime
+                    else None,
+                    time_start=item.confirmation_datetime.time_period.start_time
+                    if item.confirmation_datetime
+                    else None,
+                    time_end=item.confirmation_datetime.time_period.end_time
+                    if item.confirmation_datetime
+                    else None,
                 )
                 for item in aggregate.confirmation_datetime_history
             ]
@@ -158,9 +172,15 @@ class RequestRepository(IRequestRepository):
                 result.confirmation_datetime_history.append(
                     RequestConfirmationHistoryItemSchema(
                         request=result,
-                        date=confirmation_history_item.confirmation_datetime.date,
-                        time_start=confirmation_history_item.confirmation_datetime.time_period.start_time,
-                        time_end=confirmation_history_item.confirmation_datetime.time_period.end_time,
+                        date=confirmation_history_item.confirmation_datetime.date
+                        if confirmation_history_item.confirmation_datetime
+                        else None,
+                        time_start=confirmation_history_item.confirmation_datetime.time_period.start_time
+                        if confirmation_history_item.confirmation_datetime
+                        else None,
+                        time_end=confirmation_history_item.confirmation_datetime.time_period.end_time
+                        if confirmation_history_item.confirmation_datetime
+                        else None,
                         occurred_at=confirmation_history_item.occurred_at,
                     )
                 )
@@ -218,7 +238,11 @@ class RequestRepository(IRequestRepository):
                     time_period=TimePeriod(
                         start_time=item.time_start, end_time=item.time_end
                     ),
-                ),
+                )
+                if item.date is not None
+                and item.time_start is not None
+                and item.time_end is not None
+                else None,
                 occurred_at=item.occurred_at,
             )
             for item in model.confirmation_datetime_history

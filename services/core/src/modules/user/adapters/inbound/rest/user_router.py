@@ -10,7 +10,7 @@ from modules.user.application.ports.inbound.queries import IGetUser
 from modules.user.domain.aggregates import UserId
 from modules.user.domain.commands import ChangeEmail, ChangeName, ChangePassword
 from modules.user.domain.value_objects import Email
-from shared.adapters import get_current_user_id, MessageResponse, ErrorResponse
+from shared.adapters.rest import get_current_user_id, MessageResponse, ErrorResponse
 from .dto import (
     UpdateEmailRequest,
     UpdateNameRequest,

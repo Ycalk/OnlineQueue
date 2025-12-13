@@ -46,3 +46,13 @@ class IRequestRepository(Protocol):
             Queue | None: найденная очередь или None.
         """
         ...
+
+    async def save_queue(self, queue: Queue) -> None:
+        """Сохранение или обновление очереди.
+
+        Args:
+            queue (Queue): агрегат очереди.
+        """
+        ...
+
+    async def commit(self) -> None: ...

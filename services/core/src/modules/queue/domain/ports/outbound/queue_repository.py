@@ -1,5 +1,7 @@
 from typing import Protocol
+
 from modules.queue.domain.aggregates import Queue, QueueId
+from modules.queue.domain.value_objects import RequestId
 
 
 class IQueueRepository(Protocol):
@@ -40,3 +42,16 @@ class IQueueRepository(Protocol):
             Queue | None: очередь
         """
         ...
+
+    async def find_by_request_id(self, request_id: RequestId) -> Queue | None:
+        """Поиск очереди по идентификатору запроса
+
+        Args:
+            request_id (RequestId): идентификатор запроса
+
+        Returns:
+            Queue | None: очередь
+        """
+        ...
+
+    async def commit(self) -> None: ...

@@ -37,7 +37,7 @@ from modules.request.application.dto import (
     GetUserRequests as GetUserRequestsQueryDTO,
     GetQueueRequests as GetQueueRequestsQueryDTO,
 )
-from shared.adapters import get_current_user_id, MessageResponse, ErrorResponse
+from shared.adapters.rest import get_current_user_id, MessageResponse, ErrorResponse
 from .dto import (
     CreateRequestRequest,
     UpdateRequestConfirmationDatetime as UpdateRequestConfirmationDatetimeRequest,

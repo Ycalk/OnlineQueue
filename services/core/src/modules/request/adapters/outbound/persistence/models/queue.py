@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from shared.persistence.utils import Base
+from shared.adapters.persistence.utils import Base
 
 if TYPE_CHECKING:
     from .request import Request
@@ -32,6 +32,7 @@ class Queue(Base):
         back_populates="queue",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(Request.created_at)",
     )
 
     def __init__(

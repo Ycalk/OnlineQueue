@@ -105,10 +105,6 @@ class QueueId(BaseModel):
 
 
 class RequestDatetime(BaseModel):
-    """
-    Конкретное подтверждённое время записи: дата + интервал.
-    """
-
     model_config = ConfigDict(frozen=True)
 
     date: date
@@ -151,12 +147,12 @@ class RequestStatusHistoryItem(BaseModel):
 class RequestConfirmationDatetimeHistoryItem(BaseModel):
     """
     Элемент истории подтверждений: когда для заявки назначили
-    конкретный интервал времени.
+    конкретный интервал времени. None - означает, что время было убрано
     """
 
     model_config = ConfigDict(frozen=True)
 
-    confirmation_datetime: RequestDatetime
+    confirmation_datetime: RequestDatetime | None
     occurred_at: datetime = Field(default_factory=datetime.now)
 
 

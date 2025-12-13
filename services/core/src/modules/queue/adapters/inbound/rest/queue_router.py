@@ -27,7 +27,7 @@ from modules.queue.domain.value_objects import (
     UserId,
 )
 from modules.queue.domain.aggregates import QueueId
-from shared.adapters import get_current_user_id, MessageResponse, ErrorResponse
+from shared.adapters.rest import get_current_user_id, MessageResponse, ErrorResponse
 from .dto import (
     CreateQueueRequest,
     UpdateQueueNameRequest,

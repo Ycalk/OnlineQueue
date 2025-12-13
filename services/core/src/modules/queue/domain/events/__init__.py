@@ -6,6 +6,8 @@ from .request_archived import RequestArchived
 from .queue_activated import QueueActivated
 from .queue_deactivated import QueueDeactivated
 from .queue_cleaned_up import QueueCleanedUp
+from .request_requeued import RequestRequeued
+from .request_rejected import RequestRejected
 
 
 __all__ = [
@@ -17,4 +19,6 @@ __all__ = [
     "QueueActivated",
     "QueueDeactivated",
     "QueueCleanedUp",
+    "RequestRequeued",
+    "RequestRejected",
 ]

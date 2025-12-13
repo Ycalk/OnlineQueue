@@ -152,7 +152,11 @@ class RequestReader(IRequestReader):
                     time_period=TimePeriod(
                         start_time=item.time_start, end_time=item.time_end
                     ),
-                ),
+                )
+                if item.date is not None
+                and item.time_start is not None
+                and item.time_end is not None
+                else None,
                 occurred_at=item.occurred_at,
             )
             for item in model.confirmation_datetime_history

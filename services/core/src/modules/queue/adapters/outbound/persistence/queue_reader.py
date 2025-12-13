@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
-from .models import Request as RequestSchema
+from .models import QueueRequest as RequestSchema
 from modules.queue.domain.aggregates import Queue, QueueId
 from modules.queue.domain.value_objects import (
     Name,
@@ -17,6 +17,7 @@ from modules.queue.domain.value_objects import (
     RequestId,
     RequestDateTime,
     RequestStatus,
+    RequestPriority,
 )
 from modules.queue.domain.entities import Request
 
@@ -100,4 +101,5 @@ class QueueReader(IQueueReader):
             archived=model.archived,
             created_at=model.created_at,
             status=RequestStatus(value=model.status),
+            priority=RequestPriority(value=model.priority),
         )

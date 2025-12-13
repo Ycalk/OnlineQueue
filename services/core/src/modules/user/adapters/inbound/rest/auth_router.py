@@ -5,7 +5,7 @@ from modules.user.domain.commands import CreateUser, Login
 from modules.user.domain.value_objects import Email, Name
 from modules.user.domain.errors import InvalidPasswordError
 from modules.user.application.errors import UserNotFoundError
-from shared.adapters import (
+from shared.adapters.rest import (
     JWTService,
     InvalidTokenError,
     TokenExpiredError,

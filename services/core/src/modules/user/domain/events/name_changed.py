@@ -1,10 +1,19 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.user.domain.value_objects import Email, Name
-from modules.user.domain.aggregates import UserId
 
 
 class NameChanged(DomainEvent):
-    user_id: UserId
-    email: Email
-    old_name: Name
-    new_name: Name
+    name: ClassVar[str] = "user.name_changed"
+
+    user_id: UUID
+    email: str
+
+    old_first_name: str
+    old_last_name: str
+    old_patronymic: str | None
+
+    new_first_name: str
+    new_last_name: str
+    new_patronymic: str | None

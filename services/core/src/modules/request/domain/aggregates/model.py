@@ -13,6 +13,7 @@ from modules.request.domain.value_objects import (
     RequestConfirmationDatetimeHistoryItem,
     RequestPriorityHistoryItem,
     Comment,
+    CommentAuthor,
 )
 from modules.request.domain.events import (
     RequestCreated,
@@ -25,8 +26,9 @@ from modules.request.domain.events import (
 from modules.request.domain.errors import (
     RejectedRequestIsFrozen,
     ArchivedRequestIsFrozen,
-    PreferredVisitingTimeMustBeInsideQueueReceptionTime,
+    TimeMustBeInsideQueueReceptionTime,
     CannotCreateRequestToInactiveQueue,
+    CannotRequeueNotAcceptedRequest,
 )
 
 
@@ -38,7 +40,6 @@ class Request(AggregateRoot):
     user_id: UserId
     queue: Queue
 
-    # Предпочитаемое и подтверждённое время записи
     preferred_datetime: RequestDatetime
 
     # История статусов и подтверждений
@@ -65,7 +66,7 @@ class Request(AggregateRoot):
         return (
             max(
                 self.confirmation_datetime_history,
-                key=lambda x: x.confirmation_datetime.time_period.start_time,
+                key=lambda x: x.occurred_at,
             ).confirmation_datetime
             if len(self.confirmation_datetime_history) > 0
             else None
@@ -86,7 +87,7 @@ class Request(AggregateRoot):
             )
 
         if not preferred_datetime.time_period.is_inside(queue.reception_time):
-            raise PreferredVisitingTimeMustBeInsideQueueReceptionTime(
+            raise TimeMustBeInsideQueueReceptionTime(
                 "Preferred visiting time must be inside queue reception time"
             )
 
@@ -106,11 +107,13 @@ class Request(AggregateRoot):
 
         request._add_event(
             RequestCreated(
-                request_id=request.id,
-                user_id=user_id,
-                queue_id=queue.id,
-                purpose=purpose,
-                preferred_datetime=preferred_datetime,
+                request_id=request.id.value,
+                user_id=user_id.value,
+                queue_id=queue.id.value,
+                purpose=purpose.value,
+                preferred_date=preferred_datetime.date,
+                preferred_time_start=preferred_datetime.time_period.start_time,
+                preferred_time_end=preferred_datetime.time_period.end_time,
                 priority=priority,
                 status=RequestStatus.PENDING,
             )
@@ -133,6 +136,11 @@ class Request(AggregateRoot):
                 "Archived request confirmation datetime is unchangeable"
             )
 
+        if not new_confirmed_datetime.time_period.is_inside(self.queue.reception_time):
+            raise TimeMustBeInsideQueueReceptionTime(
+                "Confirmed visiting time must be inside queue reception time"
+            )
+
         self.confirmation_datetime_history.append(
             RequestConfirmationDatetimeHistoryItem(
                 confirmation_datetime=new_confirmed_datetime
@@ -144,14 +152,19 @@ class Request(AggregateRoot):
             )
             self._add_event(
                 RequestAccepted(
-                    request_id=self.id,
-                    confirmed_datetime=new_confirmed_datetime,
+                    request_id=self.id.value,
+                    confirmed_date=new_confirmed_datetime.date,
+                    confirmed_time_start=new_confirmed_datetime.time_period.start_time,
+                    confirmed_time_end=new_confirmed_datetime.time_period.end_time,
                 )
             )
         else:
             self._add_event(
                 RequestChangedConfirmedDatetime(
-                    request_id=self.id, new_confirmed_datetime=new_confirmed_datetime
+                    request_id=self.id.value,
+                    new_confirmed_date=new_confirmed_datetime.date,
+                    new_confirmed_time_start=new_confirmed_datetime.time_period.start_time,
+                    new_confirmed_time_end=new_confirmed_datetime.time_period.end_time,
                 )
             )
 
@@ -162,23 +175,27 @@ class Request(AggregateRoot):
         if self.archived:
             raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
 
+        if new_priority == self.priority:
+            return
+
         self.priority_history.append(RequestPriorityHistoryItem(priority=new_priority))
         self._add_event(
-            RequestChangedPriority(request_id=self.id, new_priority=new_priority)
+            RequestChangedPriority(request_id=self.id.value, new_priority=new_priority)
         )
 
     def reject(self) -> None:
         if self.status == RequestStatus.REJECTED:
-            raise RejectedRequestIsFrozen("Rejected request priority is unchangeable")
+            raise RejectedRequestIsFrozen("Rejected request status is unchangeable")
 
         if self.archived:
-            raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
+            raise ArchivedRequestIsFrozen("Archived request status is unchangeable")
 
         self.status_history.append(
             RequestStatusHistoryItem(status=RequestStatus.REJECTED)
         )
+        self.archived = True
 
-        self._add_event(RequestRejected(request_id=self.id))
+        self._add_event(RequestRejected(request_id=self.id.value))
 
     def add_comment(self, comment: Comment) -> None:
         if self.status == RequestStatus.REJECTED:
@@ -188,4 +205,45 @@ class Request(AggregateRoot):
             raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
 
         self.comments.append(comment)
-        self._add_event(AddedComment(request_id=self.id, comment=comment))
+        self._add_event(
+            AddedComment(
+                request_id=self.id.value,
+                comment_text=comment.text,
+                author_id=self.user_id.value
+                if comment.author == CommentAuthor.VISITER
+                else self.queue.owner_id.value,
+            )
+        )
+
+    def on_rejected(self):
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen("Rejected request status is unchangeable")
+
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Archived request status is unchangeable")
+
+        self.status_history.append(
+            RequestStatusHistoryItem(status=RequestStatus.REJECTED)
+        )
+        self.archived = True
+
+    def on_archived(self):
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Cannot archive archived request")
+        self.archived = True
+
+    def on_requeued(self):
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Cannot requeue archived request")
+
+        if self.status != RequestStatus.ACCEPTED:
+            raise CannotRequeueNotAcceptedRequest(
+                "Cannot requeue request with status other than accepted"
+            )
+
+        self.status_history.append(
+            RequestStatusHistoryItem(status=RequestStatus.PENDING)
+        )
+        self.confirmation_datetime_history.append(
+            RequestConfirmationDatetimeHistoryItem(confirmation_datetime=None)
+        )

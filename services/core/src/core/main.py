@@ -7,12 +7,12 @@ from core.settings import settings
 from shared.providers import (
     PersistenceProvider,
     EventProvider,
-    LoggingProvider,
     UserProvider,
     QueueProvider,
     RequestProvider,
+    EventHandlersProvider,
 )
-from shared.adapters import ErrorResponse
+from shared.adapters.rest import ErrorResponse
 from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
 from modules.queue.adapters.inbound.rest import queue_router
@@ -49,12 +49,12 @@ app = FastAPI(
 )
 
 container = make_async_container(
-    LoggingProvider(),
     PersistenceProvider(),
     EventProvider(),
     UserProvider(),
     QueueProvider(),
     RequestProvider(),
+    EventHandlersProvider(),
 )
 
 setup_dishka(container=container, app=app)
