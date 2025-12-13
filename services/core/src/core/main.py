@@ -12,7 +12,7 @@ from shared.providers import (
     QueueProvider,
     RequestProvider,
 )
-from shared.adapters import ErrorResponse
+from shared.adapters.rest import ErrorResponse
 from .middleware import register_exception_handlers
 from modules.user.adapters.inbound.rest import auth_router, user_router
 from modules.queue.adapters.inbound.rest import queue_router

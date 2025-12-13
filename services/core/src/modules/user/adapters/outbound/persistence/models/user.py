@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 from datetime import datetime
 from typing import Optional
-from shared.persistence.utils import Base
+from shared.adapters.persistence.utils import Base
 from sqlalchemy import func, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING

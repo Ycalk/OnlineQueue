@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from shared.persistence import DATABASE_URL, Base, register_models
+from shared.adapters.persistence import DATABASE_URL, Base, register_models
 from core.settings import settings
 
 

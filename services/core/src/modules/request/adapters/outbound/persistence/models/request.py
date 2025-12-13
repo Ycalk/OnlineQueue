@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from shared.persistence.utils import Base
+from shared.adapters.persistence.utils import Base
 from .queue import Queue
 
 

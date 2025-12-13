@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 from datetime import datetime, time, date
-from shared.persistence.utils import Base
+from shared.adapters.persistence.utils import Base
 from sqlalchemy import func, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .queue import Queue

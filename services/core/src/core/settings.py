@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     encoding_algorithm: str = "HS256"
     refresh_token_cookie_name: str = "refresh_token"
 
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = 5672
+    rabbitmq_login: str = "guest"
+    rabbitmq_password: str = "guest"
+
     @model_validator(mode="after")
     def validate_production_requirements(self) -> Self:
         if not self.debug:
