@@ -1,5 +1,5 @@
 from .queue import Queue
-from .request import Request
+from .request import QueueRequest
 
 
-__all__ = ["Queue", "Request"]
+__all__ = ["Queue", "QueueRequest"]

@@ -30,18 +30,26 @@ class InternalEventDispatcher(IEventProcessor):
                     "have the same name."
                 )
             )
-        self._handlers.get(event_type, []).append(handler)
-        self._logger.info(f"Registered event handler: {handler}")
+        self._handlers.setdefault(event_type, []).append(handler)
+        self._logger.info(
+            f"Registered event handler: {handler.__name__} for event: {event_type.__name__}"
+        )
 
     async def call_handlers(
         self, event: DomainEvent, container: AsyncContainer
     ) -> None:
-        handlers = self._handlers.get(event.__class__, [])
+        handlers = self._handlers.get(type(event), [])
+        self._logger.info(
+            f"Found {len(handlers)} handlers for event: {event.__class__.__name__}"
+        )
+        if len(handlers) == 0:
+            return
+        self._logger.info("Calling event handlers...")
         try:
             async with asyncio.TaskGroup() as tg:
                 for handler in handlers:
                     handler_instance = await container.get(handler)
-                    self._logger.info(f"Calling event handler: {handler_instance}")
+                    self._logger.info(f"Calling event handler: {handler.__name__}")
                     tg.create_task(handler_instance(event))
         except ExceptionGroup as eg:
             raise eg.exceptions[0] from eg

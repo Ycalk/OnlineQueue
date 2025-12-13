@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .request import Request
+    from .request import QueueRequest
 
 
 class Queue(Base):
@@ -27,10 +27,11 @@ class Queue(Base):
         server_default=func.now(), onupdate=func.now()
     )
 
-    requests: Mapped[list["Request"]] = relationship(
+    requests: Mapped[list["QueueRequest"]] = relationship(
         back_populates="queue",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(QueueRequest.created_at)",
     )
 
     def __init__(

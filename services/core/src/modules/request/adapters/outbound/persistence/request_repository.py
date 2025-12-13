@@ -47,7 +47,7 @@ class RequestRepository(IRequestRepository):
         )
         result = await self._session.execute(stmt)
         request_model = self._to_orm(request, result.scalar_one_or_none())
-        self._session.add(request_model)
+        await self._session.merge(request_model)
 
         await self._session.flush()
 
@@ -90,6 +90,9 @@ class RequestRepository(IRequestRepository):
         queue_model = self._queue_to_orm(queue)
         self._session.add(queue_model)
         await self._session.flush()
+
+    async def commit(self) -> None:
+        await self._session.commit()
 
     def _to_orm(
         self, aggregate: RequestAggregate, schema: RequestSchema | None = None

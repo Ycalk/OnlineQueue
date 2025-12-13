@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .queue import Queue
 
 
-class Request(Base):
+class QueueRequest(Base):
     __tablename__ = "request"
     __table_args__ = {"schema": "queue_schema"}
 
@@ -40,6 +40,7 @@ class Request(Base):
         preferred_time_start: time,
         preferred_time_end: time,
         status: str,
+        priority: str,
         confirmed_date: date | None = None,
         confirmed_time_start: time | None = None,
         confirmed_time_end: time | None = None,
@@ -56,6 +57,7 @@ class Request(Base):
         self.confirmed_date = confirmed_date
         self.confirmed_time_start = confirmed_time_start
         self.confirmed_time_end = confirmed_time_end
+        self.priority = priority
         if id:
             self.id = id
         if archived:

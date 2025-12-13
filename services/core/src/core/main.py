@@ -7,7 +7,6 @@ from core.settings import settings
 from shared.providers import (
     PersistenceProvider,
     EventProvider,
-    LoggingProvider,
     UserProvider,
     QueueProvider,
     RequestProvider,
@@ -50,7 +49,6 @@ app = FastAPI(
 )
 
 container = make_async_container(
-    LoggingProvider(),
     PersistenceProvider(),
     EventProvider(),
     UserProvider(),

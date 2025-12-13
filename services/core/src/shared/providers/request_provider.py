@@ -55,7 +55,10 @@ class RequestProvider(Provider):
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
     ) -> ICreateRequest:
-        return CreateRequest(event_publisher, request_repository)
+        return CreateRequest(
+            event_publisher,
+            request_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_update_request_priority_use_case(
@@ -63,7 +66,10 @@ class RequestProvider(Provider):
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
     ) -> IUpdateRequestPriority:
-        return UpdateRequestPriority(event_publisher, request_repository)
+        return UpdateRequestPriority(
+            event_publisher,
+            request_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_update_request_confirmation_datetime_use_case(
@@ -71,7 +77,10 @@ class RequestProvider(Provider):
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
     ) -> IUpdateRequestConfirmationDatetime:
-        return UpdateRequestConfirmationDatetime(event_publisher, request_repository)
+        return UpdateRequestConfirmationDatetime(
+            event_publisher,
+            request_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_add_comment_use_case(
@@ -79,7 +88,10 @@ class RequestProvider(Provider):
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
     ) -> IAddComment:
-        return AddComment(event_publisher, request_repository)
+        return AddComment(
+            event_publisher,
+            request_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_reject_request_use_case(
@@ -87,7 +99,10 @@ class RequestProvider(Provider):
         event_publisher: IEventPublisher,
         request_repository: IRequestRepository,
     ) -> IRejectRequest:
-        return RejectRequest(event_publisher, request_repository)
+        return RejectRequest(
+            event_publisher,
+            request_repository,
+        )
 
     # ---------- queries ----------
 

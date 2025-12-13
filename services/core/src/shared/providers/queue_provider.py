@@ -1,5 +1,6 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from modules.queue.domain.ports.outbound import IQueueRepository
 from modules.queue.application.ports.outbound.queue_reader import IQueueReader
 from modules.queue.adapters.outbound.persistence.queue_reader import QueueReader
@@ -72,7 +73,10 @@ class QueueProvider(Provider):
         event_publisher: IEventPublisher,
         queue_repository: IQueueRepository,
     ) -> ICleanupQueue:
-        return CleanupQueue(event_publisher, queue_repository)
+        return CleanupQueue(
+            event_publisher,
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_create_queue_use_case(
@@ -80,7 +84,10 @@ class QueueProvider(Provider):
         event_publisher: IEventPublisher,
         queue_repository: IQueueRepository,
     ) -> ICreateQueue:
-        return CreateQueue(event_publisher, queue_repository)
+        return CreateQueue(
+            event_publisher,
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_name_use_case(
@@ -88,7 +95,10 @@ class QueueProvider(Provider):
         event_publisher: IEventPublisher,
         queue_repository: IQueueRepository,
     ) -> IChangeName:
-        return ChangeName(event_publisher, queue_repository)
+        return ChangeName(
+            event_publisher,
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_description_use_case(
@@ -96,7 +106,10 @@ class QueueProvider(Provider):
         event_publisher: IEventPublisher,
         queue_repository: IQueueRepository,
     ) -> IChangeDescription:
-        return ChangeDescription(event_publisher, queue_repository)
+        return ChangeDescription(
+            event_publisher,
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_change_cleanup_period_use_case(
@@ -104,7 +117,10 @@ class QueueProvider(Provider):
         event_publisher: IEventPublisher,
         queue_repository: IQueueRepository,
     ) -> IChangeCleanupPeriod:
-        return ChangeCleanupPeriod(event_publisher, queue_repository)
+        return ChangeCleanupPeriod(
+            event_publisher,
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_get_queue_query(self, reader: IQueueReader) -> IGetQueue:

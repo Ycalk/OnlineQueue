@@ -1,5 +1,7 @@
 from pydantic import BaseModel, model_validator, Field
 from datetime import datetime
+from typing import Self
+
 from modules.queue.domain.value_objects import (
     RequestDateTime,
     RequestStatus,
@@ -43,19 +45,15 @@ class Request(BaseModel):
         )
 
     @model_validator(mode="after")
-    def check_confirmed_time(cls, values):
-        confirmed_time: RequestDateTime | None = values.get("confirmed_time")
-        status: RequestStatus = values.get("status")
-        archived: bool = values.get("archived")
-
-        if status == RequestStatus.ACCEPTED and confirmed_time is None:
+    def check_confirmed_time(self) -> Self:
+        if self.status == RequestStatus.ACCEPTED and self.confirmed_time is None:
             raise NotConsistentFields(
                 "Confirmed time is required when request is accepted"
             )
-        elif status == RequestStatus.PENDING and confirmed_time is not None:
+        elif self.status == RequestStatus.PENDING and self.confirmed_time is not None:
             raise NotConsistentFields(
                 "Confirmed time must not be set when request is pending"
             )
-        elif status == RequestStatus.REJECTED and not archived:
+        elif self.status == RequestStatus.REJECTED and not self.archived:
             raise NotConsistentFields("Request must be archived when rejected")
-        return values
+        return self

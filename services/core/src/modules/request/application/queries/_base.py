@@ -5,6 +5,9 @@ from modules.request.application.dto import (
     Request as RequestDTO,
     RequestDatetime as RequestDatetimeDTO,
     ConfirmationDatetimeHistoryItem as ConfirmationDatetimeHistoryItemDTO,
+    RequestPriorityHistoryItem as RequestPriorityHistoryItemDTO,
+    RequestStatusHistoryItem as RequestStatusHistoryItemDTO,
+    Comment as CommentDTO,
 )
 from modules.request.domain.aggregates import Request as RequestDomain
 from modules.request.domain.value_objects import (
@@ -62,9 +65,28 @@ class BaseRequestQuery(ABC):
                 self._confirmation_datetime_history_item_to_dto(item)
                 for item in aggregate.confirmation_datetime_history
             ],
-            status_history=aggregate.status_history,
-            priority_history=aggregate.priority_history,
-            comments=aggregate.comments,
+            status_history=[
+                RequestStatusHistoryItemDTO(
+                    status=item.status,
+                    occurred_at=int(item.occurred_at.timestamp()),
+                )
+                for item in aggregate.status_history
+            ],
+            priority_history=[
+                RequestPriorityHistoryItemDTO(
+                    priority=item.priority,
+                    occurred_at=int(item.occurred_at.timestamp()),
+                )
+                for item in aggregate.priority_history
+            ],
+            comments=[
+                CommentDTO(
+                    text=item.text,
+                    author=item.author,
+                    created_at=int(item.created_at.timestamp()),
+                )
+                for item in aggregate.comments
+            ],
             is_archived=aggregate.archived,
             priority=aggregate.priority,
             status=aggregate.status,

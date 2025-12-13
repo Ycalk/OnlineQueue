@@ -62,4 +62,4 @@ class RabbitMQEventPublisher(IEventPublisher):
         try:
             await exchange.publish(message, routing_key="")
         except aio_pika.exceptions.DeliveryError:
-            self._logger.info(f"Message delivery failed for event '{event.name}'")
+            self._logger.warning(f"Message delivery failed for event '{event.name}'")

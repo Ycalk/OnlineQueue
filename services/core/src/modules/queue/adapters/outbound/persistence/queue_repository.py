@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, exists
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
-from .models import Request as RequestSchema
+from .models import QueueRequest as RequestSchema
 from modules.queue.domain.aggregates import Queue, QueueId
 from modules.queue.domain.value_objects import (
     Name,
@@ -29,7 +29,7 @@ class QueueRepository(IQueueRepository):
         for req in queue.requests:
             request_schema = self._request_to_orm(req, queue_model)
             queue_model.requests.append(request_schema)
-        self._session.add(queue_model)
+        await self._session.merge(queue_model)
         await self._session.flush()
 
     async def delete(self, queue: Queue | QueueId) -> None:
@@ -72,6 +72,9 @@ class QueueRepository(IQueueRepository):
 
         return await self.find(QueueId(value=request_model.queue_id))
 
+    async def commit(self) -> None:
+        await self._session.commit()
+
     def _queue_to_orm(self, queue: Queue) -> QueueSchema:
         return QueueSchema(
             id=queue.id.value,
@@ -107,6 +110,7 @@ class QueueRepository(IQueueRepository):
                 else None
             ),
             archived=request.archived,
+            priority=request.priority.value,
             created_at=request.created_at,
         )
 

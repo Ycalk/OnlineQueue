@@ -34,6 +34,7 @@ class Request(Base):
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(RequestStatusHistoryItem.occurred_at)",
     )
     confirmation_datetime_history: Mapped[
         list["RequestConfirmationDatetimeHistoryItem"]
@@ -41,16 +42,19 @@ class Request(Base):
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(RequestConfirmationDatetimeHistoryItem.occurred_at)",
     )
     comments: Mapped[list["Comment"]] = relationship(
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(Comment.created_at)",
     )
     priority_history: Mapped[list["RequestPriorityHistoryItem"]] = relationship(
         back_populates="request",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(RequestPriorityHistoryItem.occurred_at)",
     )
 
     queue: Mapped[Queue] = relationship(back_populates="requests")

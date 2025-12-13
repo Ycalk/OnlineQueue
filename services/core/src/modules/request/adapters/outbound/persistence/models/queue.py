@@ -32,6 +32,7 @@ class Queue(Base):
         back_populates="queue",
         cascade="all, delete-orphan",
         lazy="raise",
+        order_by="desc(Request.created_at)",
     )
 
     def __init__(

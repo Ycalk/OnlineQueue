@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from .models import Queue as QueueSchema
-from .models import Request as RequestSchema
+from .models import QueueRequest as RequestSchema
 from modules.queue.domain.aggregates import Queue, QueueId
 from modules.queue.domain.value_objects import (
     Name,

@@ -1,4 +1,5 @@
 from abc import ABC
+from logging import getLogger
 
 from shared.building_blocks.event import IEventPublisher
 from shared.building_blocks.use_case import ApplicationUseCase
@@ -17,6 +18,7 @@ class BaseRequestUseCase(ApplicationUseCase, ABC):
     ):
         super().__init__(event_publisher)
         self._request_repository = request_repository
+        self._logger = getLogger("use_case.request")
 
     async def _load_and_check_queue_owner(
         self,
@@ -26,9 +28,15 @@ class BaseRequestUseCase(ApplicationUseCase, ABC):
         request = await self._request_repository.find_by_id(request_id)
 
         if request is None:
+            self._logger.info(
+                f"Request with id {request_id.value} not found: command not executed"
+            )
             raise RequestNotFoundError(f"Request with id {request_id} not found")
 
         if request.queue.owner_id != requester:
+            self._logger.info(
+                f"User {requester.value} is not owner of queue {request.queue.id.value}: command not executed"
+            )
             raise NoRightsError(
                 f"User {requester.value} has no rights to change request {request_id}"
             )
@@ -43,9 +51,15 @@ class BaseRequestUseCase(ApplicationUseCase, ABC):
         request = await self._request_repository.find_by_id(request_id)
 
         if request is None:
+            self._logger.info(
+                f"Request with id {request_id.value} not found: command not executed"
+            )
             raise RequestNotFoundError(f"Request with id {request_id} not found")
 
         if request.user_id != requester:
+            self._logger.info(
+                f"User {requester.value} is not requester of request {request_id.value}: command not executed"
+            )
             raise NoRightsError(
                 f"User {requester.value} has no rights to change request {request_id}"
             )

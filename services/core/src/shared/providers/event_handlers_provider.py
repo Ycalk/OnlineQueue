@@ -50,27 +50,33 @@ class EventHandlersProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def get_on_request_accepted_handler(
-        self,
-        queue_repository: IQueueRepository,
-        event_publisher: IEventPublisher,
+        self, queue_repository: IQueueRepository, event_publisher: IEventPublisher
     ) -> OnRequestAccepted:
         return OnRequestAccepted(queue_repository, event_publisher)
 
     @provide(scope=Scope.REQUEST)
     def get_on_request_rejected_handler(
-        self, queue_repository: IQueueRepository
+        self,
+        queue_repository: IQueueRepository,
     ) -> OnRequestRejectedQueueHandler:
-        return OnRequestRejectedQueueHandler(queue_repository)
+        return OnRequestRejectedQueueHandler(
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_on_request_changed_priority_handler(
-        self, queue_repository: IQueueRepository
+        self,
+        queue_repository: IQueueRepository,
     ) -> OnRequestChangedPriority:
-        return OnRequestChangedPriority(queue_repository)
+        return OnRequestChangedPriority(
+            queue_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def get_on_request_changed_confirmed_datetime_handler(
-        self, queue_repository: IQueueRepository, event_publisher: IEventPublisher
+        self,
+        queue_repository: IQueueRepository,
+        event_publisher: IEventPublisher,
     ) -> OnRequestChangedConfirmedDatetime:
         return OnRequestChangedConfirmedDatetime(queue_repository, event_publisher)
 
