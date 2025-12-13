@@ -35,13 +35,12 @@ class BaseRequestQuery(ABC):
     def _confirmation_datetime_history_item_to_dto(
         self, item: RequestConfirmationDatetimeHistoryItemDomain
     ) -> ConfirmationDatetimeHistoryItemDTO:
-        request_datetime = self._request_datetime_to_dto(item.confirmation_datetime)
         return ConfirmationDatetimeHistoryItemDTO(
-            date=request_datetime.date,
-            time_start=request_datetime.time_start,
-            time_end=request_datetime.time_end,
-            start_unix=request_datetime.start_unix,
-            end_unix=request_datetime.end_unix,
+            confirmation_datetime=self._request_datetime_to_dto(
+                item.confirmation_datetime
+            )
+            if item.confirmation_datetime
+            else None,
             occurred_at=int(item.occurred_at.timestamp()),
         )
 

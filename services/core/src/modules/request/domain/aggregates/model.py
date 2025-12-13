@@ -28,6 +28,7 @@ from modules.request.domain.errors import (
     ArchivedRequestIsFrozen,
     TimeMustBeInsideQueueReceptionTime,
     CannotCreateRequestToInactiveQueue,
+    CannotRequeueNotAcceptedRequest,
 )
 
 
@@ -65,7 +66,7 @@ class Request(AggregateRoot):
         return (
             max(
                 self.confirmation_datetime_history,
-                key=lambda x: x.confirmation_datetime.time_period.start_time,
+                key=lambda x: x.occurred_at,
             ).confirmation_datetime
             if len(self.confirmation_datetime_history) > 0
             else None
@@ -212,4 +213,37 @@ class Request(AggregateRoot):
                 if comment.author == CommentAuthor.VISITER
                 else self.queue.owner_id.value,
             )
+        )
+
+    def on_rejected(self):
+        if self.status == RequestStatus.REJECTED:
+            raise RejectedRequestIsFrozen("Rejected request status is unchangeable")
+
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Archived request status is unchangeable")
+
+        self.status_history.append(
+            RequestStatusHistoryItem(status=RequestStatus.REJECTED)
+        )
+        self.archived = True
+
+    def on_archived(self):
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Cannot archive archived request")
+        self.archived = True
+
+    def on_requeued(self):
+        if self.archived:
+            raise ArchivedRequestIsFrozen("Cannot requeue archived request")
+
+        if self.status != RequestStatus.ACCEPTED:
+            raise CannotRequeueNotAcceptedRequest(
+                "Cannot requeue request with status other than accepted"
+            )
+
+        self.status_history.append(
+            RequestStatusHistoryItem(status=RequestStatus.PENDING)
+        )
+        self.confirmation_datetime_history.append(
+            RequestConfirmationDatetimeHistoryItem(confirmation_datetime=None)
         )

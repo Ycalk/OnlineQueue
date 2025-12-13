@@ -30,6 +30,10 @@ class Request(BaseModel):
     def archive(self) -> None:
         self.archived = True
 
+    def reject(self) -> None:
+        self.status = RequestStatus.REJECTED
+        self.archived = True
+
     def calculate_duration_seconds(self) -> int | None:
         if self.confirmed_time is None:
             return None

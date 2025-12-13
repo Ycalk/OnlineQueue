@@ -144,9 +144,9 @@ class RequestConfirmationDatetimeHistoryItem(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     request_id: Mapped[UUID] = mapped_column(ForeignKey(Request.id), index=True)
 
-    date: Mapped[DateType] = mapped_column()
-    time_start: Mapped[TimeType] = mapped_column()
-    time_end: Mapped[TimeType] = mapped_column()
+    date: Mapped[DateType | None] = mapped_column()
+    time_start: Mapped[TimeType | None] = mapped_column()
+    time_end: Mapped[TimeType | None] = mapped_column()
     occurred_at: Mapped[DateTimeType] = mapped_column(
         server_default=func.now(),
     )
@@ -158,9 +158,9 @@ class RequestConfirmationDatetimeHistoryItem(Base):
     def __init__(
         self,
         request: Request,
-        date: DateType,
-        time_start: TimeType,
-        time_end: TimeType,
+        date: DateType | None,
+        time_start: TimeType | None,
+        time_end: TimeType | None,
         id: UUID | None = None,
         occurred_at: DateTimeType | None = None,
     ):

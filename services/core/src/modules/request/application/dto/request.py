@@ -37,7 +37,8 @@ class RequestDatetime(BaseModel):
     end_unix: int = Field(description="Unix timestamp времени окончания")
 
 
-class ConfirmationDatetimeHistoryItem(RequestDatetime):
+class ConfirmationDatetimeHistoryItem(BaseModel):
+    confirmation_datetime: RequestDatetime | None
     occurred_at: int
 
 

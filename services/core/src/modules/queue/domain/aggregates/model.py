@@ -25,6 +25,7 @@ from modules.queue.domain.events import (
     RequestArchived,
     QueueCleanedUp,
     RequestRequeued,
+    RequestRejected,
 )
 from shared.building_blocks import AggregateRoot
 from modules.queue.domain.errors import (
@@ -154,6 +155,11 @@ class Queue(AggregateRoot):
                 f"Queue {self.id.value} is already deactivated"
             )
         self.is_active = IsActive(value=False)
+        for request in self.requests:
+            if request.status == RequestStatus.REJECTED or request.archived:
+                continue
+            request.reject()
+            self._add_event(RequestRejected(request_id=request.id.value))
         self._add_event(QueueDeactivated(queue_id=self.id.value))
 
     def activate(self) -> None:

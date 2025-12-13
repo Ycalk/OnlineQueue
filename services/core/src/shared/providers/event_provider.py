@@ -42,7 +42,9 @@ class EventProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def get_event_processor(
-        self, internal_event_dispatcher: InternalEventDispatcher, event_types: list[type[IEventHandler]]
+        self,
+        internal_event_dispatcher: InternalEventDispatcher,
+        event_types: list[type[IEventHandler]],
     ) -> IEventProcessor:
         for event_type in event_types:
             await internal_event_dispatcher.register_handler(event_type)

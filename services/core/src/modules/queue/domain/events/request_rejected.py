@@ -4,7 +4,7 @@ from typing import ClassVar
 from shared.building_blocks import DomainEvent
 
 
-class RequestRequeued(DomainEvent):
-    name: ClassVar[str] = "queue.request.requeued"
+class RequestRejected(DomainEvent):
+    name: ClassVar[str] = "queue.request.rejected"
 
     request_id: UUID

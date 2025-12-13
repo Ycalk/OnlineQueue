@@ -6,7 +6,7 @@ from shared.building_blocks import DomainEvent
 
 
 class RequestArchived(DomainEvent):
-    name: ClassVar[str] = "request.archived"
+    name: ClassVar[str] = "queue.request.archived"
 
     request_id: UUID
     user_id: UUID

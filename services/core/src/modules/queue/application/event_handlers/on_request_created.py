@@ -24,7 +24,7 @@ class OnRequestCreated(IEventHandler[RequestCreated]):
         queue = await self._queue_repository.find(QueueId(value=event.queue_id))
         if queue is None:
             raise QueueNotFoundError(f"Queue with id {event.queue_id} not found")
-        
+
         queue.on_request_created(
             Request(
                 id=RequestId(value=event.request_id),
