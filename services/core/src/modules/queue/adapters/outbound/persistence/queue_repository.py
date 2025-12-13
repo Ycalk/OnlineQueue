@@ -60,6 +60,18 @@ class QueueRepository(IQueueRepository):
             return None
 
         return self._queue_to_domain(queue_model)
+    
+    async def find_by_request_id(self, request_id: RequestId) -> Queue | None:
+        request = await self._session.execute(
+            select(RequestSchema)
+            .where(RequestSchema.id == request_id.value)
+        )
+        request_model = request.scalar_one_or_none()
+
+        if request_model is None:
+            return None
+
+        return await self.find(QueueId(value=request_model.queue_id))
 
     def _queue_to_orm(self, queue: Queue) -> QueueSchema:
         return QueueSchema(

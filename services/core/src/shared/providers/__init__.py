@@ -4,6 +4,7 @@ from .logging_provider import LoggingProvider
 from .user_provider import UserProvider
 from .queue_provider import QueueProvider
 from .request_provider import RequestProvider
+from .event_handlers import EventHandlersProvider
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "UserProvider",
     "QueueProvider",
     "RequestProvider",
+    "EventHandlersProvider",
 ]

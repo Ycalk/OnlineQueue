@@ -3,7 +3,7 @@ from dishka import Provider, Scope, provide, AsyncContainer
 from typing import AsyncIterable
 
 from core.settings import settings
-from shared.building_blocks.event import IEventPublisher, IEventProcessor
+from shared.building_blocks.event import IEventPublisher, IEventProcessor, IEventHandler
 from shared.adapters.event import (
     InternalEventDispatcher,
     EventDispatcher,
@@ -41,9 +41,11 @@ class EventProvider(Provider):
         return InternalEventDispatcher(logger)
 
     @provide(scope=Scope.APP)
-    def get_event_processor(
-        self, internal_event_dispatcher: InternalEventDispatcher
+    async def get_event_processor(
+        self, internal_event_dispatcher: InternalEventDispatcher, event_types: list[type[IEventHandler]]
     ) -> IEventProcessor:
+        for event_type in event_types:
+            await internal_event_dispatcher.register_handler(event_type)
         return internal_event_dispatcher
 
     @provide(scope=Scope.REQUEST)

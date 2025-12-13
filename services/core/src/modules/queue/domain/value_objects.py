@@ -60,6 +60,12 @@ class TimePeriod(BaseModel):
             raise TimePeriodNotValid("Start time must be before end time")
         return self
 
+    def is_inside(self, other: "TimePeriod") -> bool:
+        return self.start_time >= other.start_time and self.end_time <= other.end_time
+
+    def check_intersection(self, other: "TimePeriod") -> bool:
+        return self.start_time < other.end_time and self.end_time > other.start_time
+
 
 class UserId(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -94,6 +100,11 @@ class RequestDateTime(BaseModel):
     @property
     def end_period(self) -> datetime:
         return datetime.combine(self.date, self.time_period.end_time)
+
+    def check_intersection(self, other: "RequestDateTime") -> bool:
+        return self.date == other.date and self.time_period.check_intersection(
+            other.time_period
+        )
 
 
 class RequestStatus(StrEnum):

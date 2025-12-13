@@ -26,7 +26,7 @@ from modules.request.domain.events import (
 from modules.request.domain.errors import (
     RejectedRequestIsFrozen,
     ArchivedRequestIsFrozen,
-    PreferredVisitingTimeMustBeInsideQueueReceptionTime,
+    TimeMustBeInsideQueueReceptionTime,
     CannotCreateRequestToInactiveQueue,
 )
 
@@ -86,7 +86,7 @@ class Request(AggregateRoot):
             )
 
         if not preferred_datetime.time_period.is_inside(queue.reception_time):
-            raise PreferredVisitingTimeMustBeInsideQueueReceptionTime(
+            raise TimeMustBeInsideQueueReceptionTime(
                 "Preferred visiting time must be inside queue reception time"
             )
 
@@ -135,6 +135,11 @@ class Request(AggregateRoot):
                 "Archived request confirmation datetime is unchangeable"
             )
 
+        if not new_confirmed_datetime.time_period.is_inside(self.queue.reception_time):
+            raise TimeMustBeInsideQueueReceptionTime(
+                "Confirmed visiting time must be inside queue reception time"
+            )
+
         self.confirmation_datetime_history.append(
             RequestConfirmationDatetimeHistoryItem(
                 confirmation_datetime=new_confirmed_datetime
@@ -169,6 +174,9 @@ class Request(AggregateRoot):
         if self.archived:
             raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
 
+        if new_priority == self.priority:
+            return
+
         self.priority_history.append(RequestPriorityHistoryItem(priority=new_priority))
         self._add_event(
             RequestChangedPriority(request_id=self.id.value, new_priority=new_priority)
@@ -176,14 +184,15 @@ class Request(AggregateRoot):
 
     def reject(self) -> None:
         if self.status == RequestStatus.REJECTED:
-            raise RejectedRequestIsFrozen("Rejected request priority is unchangeable")
+            raise RejectedRequestIsFrozen("Rejected request status is unchangeable")
 
         if self.archived:
-            raise ArchivedRequestIsFrozen("Archived request priority is unchangeable")
+            raise ArchivedRequestIsFrozen("Archived request status is unchangeable")
 
         self.status_history.append(
             RequestStatusHistoryItem(status=RequestStatus.REJECTED)
         )
+        self.archived = True
 
         self._add_event(RequestRejected(request_id=self.id.value))
 

@@ -10,6 +10,9 @@ from modules.queue.domain.value_objects import (
     TimePeriod,
     RequestStatus,
     UserId,
+    RequestId,
+    RequestDateTime,
+    RequestPriority,
 )
 from modules.queue.domain.entities import Request
 from modules.queue.domain.events import (
@@ -21,11 +24,17 @@ from modules.queue.domain.events import (
     QueueDeactivated,
     RequestArchived,
     QueueCleanedUp,
+    RequestRequeued,
 )
 from shared.building_blocks import AggregateRoot
 from modules.queue.domain.errors import (
     CannotActivateActiveQueue,
     CannotDeactivateAlreadyDeactivatedQueue,
+    RequestIsNotPending,
+    TimeMustBeInsideQueueReceptionTime,
+    RequestNotFound,
+    RequestIsFrozen,
+    CannotScheduleRequest,
 )
 
 
@@ -165,3 +174,128 @@ class Queue(AggregateRoot):
         if count == 0:
             return None
         return round(sum_duration / count)
+
+    # Event handlers
+    def on_request_created(self, request: Request) -> None:
+        if request.status != RequestStatus.PENDING:
+            raise RequestIsNotPending(
+                f"Can only add requests with status PENDING, got {request.status}"
+            )
+        if not request.preferred_time.time_period.is_inside(self.reception_time):
+            raise TimeMustBeInsideQueueReceptionTime(
+                "Preferred visiting time must be inside queue reception time"
+            )
+        self.requests.append(request)
+
+    def _can_displace(self, candidate: Request, incumbent: Request) -> bool:
+        """
+        Определяет, может ли кандидат (новая/изменяемая заявка) вытеснить существующую (incumbent).
+        Правила:
+        - Если приоритет кандидата выше -> True.
+        - Если приоритет одинаковый -> смотрим на created_at (кто старее, тот и прав).
+           Если кандидат создан раньше (более старый), то он вытесняет -> True.
+        - Иначе -> False.
+        """
+        priority_map = {
+            RequestPriority.HIGH: 3,
+            RequestPriority.MEDIUM: 2,
+            RequestPriority.LOW: 1,
+        }
+        return priority_map[candidate.priority] > priority_map[incumbent.priority] or (
+            priority_map[candidate.priority] == priority_map[incumbent.priority]
+            and candidate.created_at < incumbent.created_at
+        )
+
+    def on_change_request_confirmed_time(
+        self, request_id: RequestId, confirmed_time: RequestDateTime
+    ) -> None:
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        conflicts: list[Request] = []
+
+        for req in self.requests:
+            if (
+                req.id.value == target_request.id.value
+                or req.status != RequestStatus.ACCEPTED
+                or req.confirmed_time is None
+                or req.archived
+            ):
+                continue
+            if req.confirmed_time.check_intersection(confirmed_time):
+                conflicts.append(req)
+
+        if len(conflicts) == 0:
+            target_request.confirmed_time = confirmed_time
+            target_request.status = RequestStatus.ACCEPTED
+            return
+
+        if all(self._can_displace(target_request, conflict) for conflict in conflicts):
+            for conflict in conflicts:
+                conflict.confirmed_time = None
+                conflict.status = RequestStatus.PENDING
+                self._add_event(
+                    RequestRequeued(
+                        request_id=conflict.id.value,
+                    )
+                )
+            target_request.confirmed_time = confirmed_time
+            target_request.status = RequestStatus.ACCEPTED
+        else:
+            raise CannotScheduleRequest(
+                f"Request {request_id.value} cannot be scheduled due to conflicts."
+            )
+
+    def on_change_request_priority(
+        self, request_id: RequestId, new_priority: RequestPriority
+    ):
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        target_request.priority = new_priority
+
+    def on_request_rejected(self, request_id: RequestId):
+        target_request = next(
+            (
+                request
+                for request in self.requests
+                if request.id.value == request_id.value
+            ),
+            None,
+        )
+        if target_request is None:
+            raise RequestNotFound(f"Request {request_id.value} not found")
+
+        if target_request.status == RequestStatus.REJECTED or target_request.archived:
+            raise RequestIsFrozen(
+                f"Request {request_id.value} is frozen and cannot be updated"
+            )
+
+        target_request.status = RequestStatus.REJECTED
+        target_request.archived = True
