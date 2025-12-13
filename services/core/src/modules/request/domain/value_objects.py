@@ -105,10 +105,6 @@ class QueueId(BaseModel):
 
 
 class RequestDatetime(BaseModel):
-    """
-    Конкретное подтверждённое время записи: дата + интервал.
-    """
-
     model_config = ConfigDict(frozen=True)
 
     date: date

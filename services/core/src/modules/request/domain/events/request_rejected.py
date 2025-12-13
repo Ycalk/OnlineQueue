@@ -1,6 +1,10 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.request.domain.aggregates import RequestId
 
 
 class RequestRejected(DomainEvent):
-    request_id: RequestId
+    name: ClassVar[str] = "request.rejected"
+
+    request_id: UUID

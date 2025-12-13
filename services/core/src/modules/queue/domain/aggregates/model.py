@@ -59,39 +59,40 @@ class Queue(AggregateRoot):
         )
         queue._add_event(
             QueueCreated(
-                queue_id=queue.id,
-                owner_id=owner_id,
-                name=name,
-                description=description,
-                cleanup_period=cleanup_period,
-                reception_time=reception_time,
+                queue_id=queue.id.value,
+                owner_id=owner_id.value,
+                queue_name=name.value,
+                description=description.value,
+                cleanup_period_days=cleanup_period.value_days,
+                reception_time_start=reception_time.start_time,
+                reception_time_end=reception_time.end_time,
             )
         )
         return queue
 
     def change_name(self, new_name: Name) -> None:
         event = NameChanged(
-            queue_id=self.id,
-            old_name=self.name,
-            new_name=new_name,
+            queue_id=self.id.value,
+            old_name=self.name.value,
+            new_name=new_name.value,
         )
         self.name = new_name
         self._add_event(event)
 
     def change_description(self, new_description: Description) -> None:
         event = DescriptionChanged(
-            queue_id=self.id,
-            old_description=self.description,
-            new_description=new_description,
+            queue_id=self.id.value,
+            old_description=self.description.value,
+            new_description=new_description.value,
         )
         self.description = new_description
         self._add_event(event)
 
     def change_cleanup_period(self, new_cleanup_period: CleanupPeriod) -> None:
         event = CleanupPeriodChanged(
-            queue_id=self.id,
-            old_cleanup_period=self.cleanup_period,
-            new_cleanup_period=new_cleanup_period,
+            queue_id=self.id.value,
+            old_cleanup_period_days=self.cleanup_period.value_days,
+            new_cleanup_period_days=new_cleanup_period.value_days,
         )
         self.cleanup_period = new_cleanup_period
         self._add_event(event)
@@ -107,8 +108,8 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
@@ -116,8 +117,8 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
@@ -130,13 +131,13 @@ class Queue(AggregateRoot):
                 request.archive()
                 self._add_event(
                     RequestArchived(
-                        request_id=request.id,
-                        user_id=request.user_id,
+                        request_id=request.id.value,
+                        user_id=request.user_id.value,
                         request_created_at=request.created_at,
                     )
                 )
 
-        self._add_event(QueueCleanedUp(queue_id=self.id))
+        self._add_event(QueueCleanedUp(queue_id=self.id.value))
 
     def deactivate(self) -> None:
         if not self.is_active.value:
@@ -144,13 +145,13 @@ class Queue(AggregateRoot):
                 f"Queue {self.id.value} is already deactivated"
             )
         self.is_active = IsActive(value=False)
-        self._add_event(QueueDeactivated(queue_id=self.id))
+        self._add_event(QueueDeactivated(queue_id=self.id.value))
 
     def activate(self) -> None:
         if self.is_active.value:
             raise CannotActivateActiveQueue(f"Queue {self.id.value} is already active")
         self.is_active = IsActive(value=True)
-        self._add_event(QueueActivated(queue_id=self.id))
+        self._add_event(QueueActivated(queue_id=self.id.value))
 
     def calculate_average_requests_duration_seconds(self) -> int | None:
         sum_duration = 0

@@ -1,6 +1,10 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.queue.domain.aggregates import QueueId
 
 
 class QueueActivated(DomainEvent):
-    queue_id: QueueId
+    name: ClassVar[str] = "queue.activated"
+
+    queue_id: UUID

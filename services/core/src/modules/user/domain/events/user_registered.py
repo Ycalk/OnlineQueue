@@ -1,9 +1,15 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.user.domain.value_objects import Email, Name
-from modules.user.domain.aggregates import UserId
 
 
 class UserRegistered(DomainEvent):
-    user_id: UserId
-    email: Email
-    name: Name
+    name: ClassVar[str] = "user.registered"
+
+    user_id: UUID
+    email: str
+
+    first_name: str
+    last_name: str
+    patronymic: str | None

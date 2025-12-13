@@ -1,10 +1,14 @@
+from uuid import UUID
+from datetime import date, time
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.request.domain.aggregates import RequestId
-from modules.request.domain.value_objects import (
-    RequestDatetime,
-)
 
 
 class RequestChangedConfirmedDatetime(DomainEvent):
-    request_id: RequestId
-    new_confirmed_datetime: RequestDatetime
+    name: ClassVar[str] = "request.changed_confirmed_datetime"
+
+    request_id: UUID
+    new_confirmed_date: date
+    new_confirmed_time_start: time
+    new_confirmed_time_end: time

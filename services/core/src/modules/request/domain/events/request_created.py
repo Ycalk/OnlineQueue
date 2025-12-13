@@ -1,20 +1,24 @@
+from uuid import UUID
+from datetime import date, time
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.request.domain.aggregates import RequestId
 from modules.request.domain.value_objects import (
     RequestPriority,
-    RequestDatetime,
     RequestStatus,
-    UserId,
-    QueueId,
-    Purpose,
 )
 
 
 class RequestCreated(DomainEvent):
-    request_id: RequestId
-    user_id: UserId
-    queue_id: QueueId
-    purpose: Purpose
-    preferred_datetime: RequestDatetime
+    name: ClassVar[str] = "request.created"
+
+    request_id: UUID
+    user_id: UUID
+    queue_id: UUID
+    purpose: str
     priority: RequestPriority
     status: RequestStatus
+
+    preferred_date: date
+    preferred_time_start: time
+    preferred_time_end: time

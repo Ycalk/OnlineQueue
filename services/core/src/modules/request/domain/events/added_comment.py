@@ -1,10 +1,12 @@
+from uuid import UUID
+from typing import ClassVar
+
 from shared.building_blocks import DomainEvent
-from modules.request.domain.value_objects import (
-    Comment,
-)
-from modules.request.domain.aggregates import RequestId
 
 
 class AddedComment(DomainEvent):
-    request_id: RequestId
-    comment: Comment
+    name: ClassVar[str] = "request.added_comment"
+
+    request_id: UUID
+    comment_text: str
+    author_id: UUID
