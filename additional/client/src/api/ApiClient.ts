@@ -15,21 +15,46 @@ export class ApiClient {
   private accessToken: string | null = null;
   private isRefreshing: boolean = false;
   private refreshSubscribers: ((token: string) => void)[] = [];
+  // Слушатели изменения статуса авторизации (вход/выход)
+  private authListeners: (() => void)[] = [];
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.accessToken = localStorage.getItem('access_token');
   }
 
+  // --- Методы управления токеном ---
+
   public setToken(token: string) {
     this.accessToken = token;
     localStorage.setItem('access_token', token);
+    this.notifyAuthChange(); // Уведомляем подписчиков о входе
   }
 
   public clearToken() {
     this.accessToken = null;
     localStorage.removeItem('access_token');
+    this.notifyAuthChange(); // Уведомляем подписчиков о выходе
   }
+
+  // --- Методы Event Bus (подписка на изменения авторизации) ---
+
+  /**
+   * Подписаться на изменения состояния авторизации.
+   * Возвращает функцию для отписки.
+   */
+  public onAuthChange(listener: () => void): () => void {
+    this.authListeners.push(listener);
+    return () => {
+      this.authListeners = this.authListeners.filter(l => l !== listener);
+    };
+  }
+
+  private notifyAuthChange() {
+    this.authListeners.forEach(listener => listener());
+  }
+
+  // --- Основной метод запроса ---
 
   public async request<T>(endpoint: string, method: HttpMethod = 'GET', body?: any): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { notifications } from '@mantine/notifications';
 import {
     Paper,
     TextInput,
@@ -9,6 +10,7 @@ import {
     Stack,
     Box,
 } from '@mantine/core';
+import { api } from '../api/ApiClient';
 
 function RegisterPage() {
     const [firstName, setFirstName] = useState('');
@@ -18,8 +20,62 @@ function RegisterPage() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleRegister = () => {
-        // Здесь будет логика регистрации
+    const [isLoading, setIsLoading] = useState(false);
+
+    const navigate = useNavigate();
+
+    const handleRegister = async () => {
+        if (!email || !password || !firstName || !lastName) {
+            notifications.show({
+                title: 'Ошибка',
+                message: 'Заполните обязательные поля',
+                color: 'red',
+            });
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            notifications.show({
+                title: 'Ошибка',
+                message: 'Пароли не совпадают',
+                color: 'red',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const requestData = {
+                email,
+                password,
+                first_name: firstName,
+                last_name: lastName,
+                patronymic: patronymic.trim() === '' ? null : patronymic,
+            };
+
+            const response = await api.request<{ access_token: string }>('/api/v1/auth/register', 'POST', requestData);
+
+            api.setToken(response.access_token);
+
+            notifications.show({
+                title: 'Успешно',
+                message: 'Вы успешно зарегистрировались!',
+                color: 'green',
+            });
+
+            navigate('/');
+
+        } catch (error: any) {
+            console.error("Registration error:", error);
+            notifications.show({
+                title: 'Ошибка регистрации',
+                message: error.message || 'Что-то пошло не так',
+                color: 'red',
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -54,6 +110,7 @@ function RegisterPage() {
                             required
                             value={firstName}
                             onChange={(e) => setFirstName(e.currentTarget.value)}
+                            disabled={isLoading}
                         />
 
                         <TextInput
@@ -62,14 +119,15 @@ function RegisterPage() {
                             required
                             value={lastName}
                             onChange={(e) => setLastName(e.currentTarget.value)}
+                            disabled={isLoading}
                         />
 
                         <TextInput
                             label="Отчество"
                             placeholder="Введите ваше отчество"
-                            required
                             value={patronymic}
                             onChange={(e) => setPatronymic(e.currentTarget.value)}
+                            disabled={isLoading}
                         />
 
                         <TextInput
@@ -79,6 +137,7 @@ function RegisterPage() {
                             value={email}
                             onChange={(e) => setEmail(e.currentTarget.value)}
                             type="email"
+                            disabled={isLoading}
                         />
 
                         <PasswordInput
@@ -87,6 +146,7 @@ function RegisterPage() {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.currentTarget.value)}
+                            disabled={isLoading}
                         />
 
                         <PasswordInput
@@ -95,13 +155,16 @@ function RegisterPage() {
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+                            disabled={isLoading}
+                            error={confirmPassword && password !== confirmPassword ? 'Пароли не совпадают' : null}
                         />
 
-                        <Button component={Link} to="/"
+                        <Button
                             fullWidth
                             mt="md"
                             size="md"
                             onClick={handleRegister}
+                            loading={isLoading}
                         >
                             Зарегистрироваться
                         </Button>

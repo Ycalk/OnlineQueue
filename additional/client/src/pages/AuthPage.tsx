@@ -23,7 +23,7 @@ function AuthPage() {
 
     const handleAuth = async () => {
         if (!email || !password) {
-             notifications.show({
+            notifications.show({
                 title: 'Ошибка валидации',
                 message: 'Пожалуйста, заполните все поля',
                 color: 'red',
@@ -38,13 +38,13 @@ function AuthPage() {
                 email,
                 password
             });
-            
+
             api.setToken(response.access_token);
-            
-            navigate('/'); 
+
+            navigate('/');
         } catch (error: any) {
             console.error("Ошибка входа:", error);
-            
+
             notifications.show({
                 title: 'Ошибка входа',
                 message: error.message || 'Неверный логин или пароль',
@@ -100,7 +100,7 @@ function AuthPage() {
                             <UnstyledButton component={Link} to="/recovery-password">Забыли пароль?</UnstyledButton>
                         </Group>
 
-                        <Button 
+                        <Button
                             fullWidth
                             mt="md"
                             size="md"

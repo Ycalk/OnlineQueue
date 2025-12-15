@@ -49,7 +49,7 @@ function NewPass() {
                             value={password}
                             onChange={(e) => setPassword(e.currentTarget.value)}
                         />
-                        
+
                         <PasswordInput
                             placeholder="Введите пароль ещё раз"
                             value={confirmPassword}
