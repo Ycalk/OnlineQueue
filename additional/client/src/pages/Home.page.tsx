@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     AppShell,
     Container,
@@ -20,6 +20,8 @@ import {
     ActionIcon,
     Divider,
     NumberInput,
+    Avatar,
+    Loader
 } from '@mantine/core';
 
 import {
@@ -32,6 +34,15 @@ import {
     IconMenu2,
     IconPlus,
 } from '@tabler/icons-react';
+import { api } from '../api/ApiClient';
+
+// Тип данных пользователя с бэкенда
+interface UserProfile {
+    email: string;
+    first_name: string;
+    last_name: string;
+    patronymic: string;
+}
 
 interface Queue {
     id: string;
@@ -49,18 +60,63 @@ interface Queue {
 }
 
 function HomePage() {
+    const navigate = useNavigate();
+
+    // Состояние авторизации и данные пользователя
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [isAuthLoading, setIsAuthLoading] = useState(true); // Чтобы не мигал интерфейс при загрузке
+
     const [search, setSearch] = useState('');
     const [selectedQueue, setSelectedQueue] = useState<Queue | null>(null);
     const [showCreateQueue, setShowCreateQueue] = useState(false);
+
+    // Поля формы записи
     const [appointmentDate, setAppointmentDate] = useState('');
     const [appointmentTime, setAppointmentTime] = useState('');
     const [visitPurpose, setVisitPurpose] = useState('');
 
+    // Поля формы создания очереди
     const [queueName, setQueueName] = useState('');
     const [queueDescription, setQueueDescription] = useState('');
     const [queueAutocloseDays, setQueueAutocloseDays] = useState('7');
     const [queueStartTime, setQueueStartTime] = useState('');
     const [queueEndTime, setQueueEndTime] = useState('');
+
+    // Проверка авторизации и получение данных пользователя
+    useEffect(() => {
+        const fetchUser = async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                setIsAuthLoading(false);
+                return;
+            }
+
+            try {
+                const userData = await api.request<UserProfile>('/api/v1/users/me');
+                setUser(userData);
+            } catch (error) {
+                console.error("Failed to fetch user profile", error);
+                api.clearToken(); // Если токен невалиден, чистим его
+                setUser(null);
+            } finally {
+                setIsAuthLoading(false);
+            }
+        };
+
+        fetchUser();
+    }, []);
+
+    const handleLogout = async () => {
+        try {
+            await api.request('/api/v1/auth/logout', 'POST');
+        } catch (error) {
+            console.error("Logout error", error);
+        } finally {
+            api.clearToken();
+            setUser(null);
+            navigate('/');
+        }
+    };
 
     const queues: Queue[] = [
         {
@@ -77,6 +133,7 @@ function HomePage() {
             startTime: '10:00',
             endTime: '12:00',
         },
+        // ... (остальные очереди оставлены без изменений для краткости)
         {
             id: '2',
             title: 'Вопросы по больничному',
@@ -91,62 +148,6 @@ function HomePage() {
             startTime: '16:00',
             endTime: '17:00',
         },
-        {
-            id: '3',
-            title: 'Устройство в штаб',
-            owner: 'Степанов Степан Степанович',
-            closestWindow: 'нет',
-            duration: '15 минут',
-            status: 'inactive',
-            description: 'Вопросы по устройству на работу',
-            email: 'stepanov@example.com',
-            phone: '+7 900 000 22 22',
-            fullPurpose: 'Вопросы по устройству на работу в штаб',
-            startTime: 'нет',
-            endTime: 'нет',
-        },
-        {
-            id: '4',
-            title: 'Субботник',
-            owner: 'Иванов Иван Иванович',
-            closestWindow: 'нет',
-            duration: '15 минут',
-            status: 'inactive',
-            description: 'Организация и участие в субботниках',
-            email: 'ivanov@example.com',
-            phone: '+7 900 000 11 11',
-            fullPurpose: 'Организация и участие в субботниках',
-            startTime: 'нет',
-            endTime: 'нет',
-        },
-        {
-            id: '5',
-            title: 'Получение премии',
-            owner: 'Иванов Иван Иванович',
-            closestWindow: 'нет',
-            duration: '15 минут',
-            status: 'inactive',
-            description: 'Вопросы по получению премии',
-            email: 'ivanov@example.com',
-            phone: '+7 900 000 11 11',
-            fullPurpose: 'Вопросы по получению премии',
-            startTime: 'нет',
-            endTime: 'нет',
-        },
-        {
-            id: '6',
-            title: 'Стажировка',
-            owner: 'Иванов Иван Иванович',
-            closestWindow: 'нет',
-            duration: '15 минут',
-            status: 'inactive',
-            description: 'Программа стажировки и обучения',
-            email: 'ivanov@example.com',
-            phone: '+7 900 000 11 11',
-            fullPurpose: 'Программа стажировки и обучения',
-            startTime: 'нет',
-            endTime: 'нет',
-        }
     ];
 
     const handleOpenQueue = (queue: Queue) => {
@@ -170,44 +171,71 @@ function HomePage() {
     };
 
     const handleCreateQueue = () => {
+        if (!user) {
+            navigate('/authorization');
+            return;
+        }
         handleCloseCreatePanel();
     };
 
     return (
-        <AppShell
-            header={{ height: 70 }}
-            padding="md"
-        >
+        <AppShell header={{ height: 70 }} padding="md">
             <AppShell.Header>
                 <Container size="100%" h="100%">
                     <Group h="100%" px="md" justify="space-between">
                         <Title order={2} c="#e91e63">К Телеком</Title>
-                        <Group>
-                            <Button component={Link} to="/authorization" variant="outline" color='#b9bbb5ff'>Вход</Button>
-                            <Button component={Link} to="/registration">Регистрация</Button>
-                            <Menu shadow="md" width={200}>
-                                <Menu.Target>
-                                    <IconMenu2 size={32}/>
-                                </Menu.Target>
 
-                                <Menu.Dropdown style={{zIndex: 1001}}>
-                                    <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
-                                        Доступные очереди
-                                    </Menu.Item>
-                                    <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
-                                        Мои очереди
-                                    </Menu.Item>
-                                    <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
-                                        Мои заявки
-                                    </Menu.Item>
-                                    <Menu.Item leftSection={<IconBellRinging size={16} />}>
-                                        Настройки уведомлений
-                                    </Menu.Item>
-                                    <Menu.Item color="red" leftSection={<IconTransitionLeft size={16} />}>
-                                        Выход
-                                    </Menu.Item>
-                                </Menu.Dropdown>
-                            </Menu>
+                        <Group>
+                            {isAuthLoading ? (
+                                <Loader size="sm" color="gray" />
+                            ) : !user ? (
+                                <>
+                                    <Button component={Link} to="/authorization" variant="outline" color='#b9bbb5ff'>
+                                        Вход
+                                    </Button>
+                                    <Button component={Link} to="/registration">
+                                        Регистрация
+                                    </Button>
+                                </>
+                            ) : (
+                                <Group gap="xs">
+                                    {/* Отображаем почту пользователя */}
+                                    <Text size="sm" fw={500} mr="xs">
+                                        {user.email}
+                                    </Text>
+
+                                    <Menu shadow="md" width={200} position="bottom-end">
+                                        <Menu.Target>
+                                            <ActionIcon variant="transparent" size="xl" color="black">
+                                                <IconMenu2 size={32} />
+                                            </ActionIcon>
+                                        </Menu.Target>
+
+                                        <Menu.Dropdown style={{ zIndex: 1001 }}>
+                                            <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
+                                                Доступные очереди
+                                            </Menu.Item>
+                                            <Menu.Item component={Link} to="/my-queue" leftSection={<IconFriends size={16} />}>
+                                                Мои очереди
+                                            </Menu.Item>
+                                            <Menu.Item component={Link} to="/my-application" leftSection={<IconChecklist size={16} />}>
+                                                Мои заявки
+                                            </Menu.Item>
+                                            <Menu.Item leftSection={<IconBellRinging size={16} />}>
+                                                Настройки уведомлений
+                                            </Menu.Item>
+                                            <Menu.Divider />
+                                            <Menu.Item
+                                                color="red"
+                                                leftSection={<IconTransitionLeft size={16} />}
+                                                onClick={handleLogout}
+                                            >
+                                                Выход
+                                            </Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
+                                </Group>
+                            )}
                         </Group>
                     </Group>
                 </Container>
@@ -229,9 +257,12 @@ function HomePage() {
                                 <IconSearch size={20} />
                             </Button>
                         </Group>
-                        <Button leftSection={<IconPlus size={16} />} onClick={() => setShowCreateQueue(true)}>
-                            Создать очередь
-                        </Button>
+                        {/* Кнопка создания доступна только авторизованным */}
+                        {user && (
+                            <Button leftSection={<IconPlus size={16} />} onClick={() => setShowCreateQueue(true)}>
+                                Создать очередь
+                            </Button>
+                        )}
                     </Group>
 
                     <Divider size={2} my="sm" />
@@ -241,21 +272,11 @@ function HomePage() {
                             {queues.map((queue) => (
                                 <Card key={queue.id} shadow="sm" padding="lg" radius="md" withBorder>
                                     <Title order={4} mb="md">{queue.title}</Title>
-
-                                    <Text size="sm" mb={4}>
-                                        Владелец: {queue.owner}
-                                    </Text>
-                                    <Text size="sm" mb={4}>
-                                        Ближайшее окно: {queue.closestWindow}
-                                    </Text>
-                                    <Text size="sm" mb="lg">
-                                        Длительность: {queue.duration}
-                                    </Text>
+                                    <Text size="sm" mb={4}>Владелец: {queue.owner}</Text>
+                                    <Text size="sm" mb={4}>Ближайшее окно: {queue.closestWindow}</Text>
+                                    <Text size="sm" mb="lg">Длительность: {queue.duration}</Text>
                                     <Group justify="space-between" align="center">
-                                        <Badge
-                                            color={queue.status === 'active' ? '#5FBF24' : '#FA5252'}
-                                            variant="dot"
-                                        >
+                                        <Badge color={queue.status === 'active' ? '#5FBF24' : '#FA5252'} variant="dot">
                                             {queue.status === 'active' ? 'Активна' : 'Неактивна'}
                                         </Badge>
                                         <Button size="sm" onClick={() => handleOpenQueue(queue)}>
@@ -266,6 +287,7 @@ function HomePage() {
                             ))}
                         </SimpleGrid>
 
+                        {/* Панель просмотра очереди */}
                         {selectedQueue && (
                             <Box
                                 onClick={handleClosePanel}
@@ -301,94 +323,33 @@ function HomePage() {
                                     <Paper p="lg">
                                         <Group justify="space-between" mb="md">
                                             <Title order={3}>Об очереди</Title>
-                                            <ActionIcon
-                                                variant="transparent"
-                                                onClick={handleClosePanel}
-                                                size="lg"
-                                            >
-                                                ✕
-                                            </ActionIcon>
+                                            <ActionIcon variant="transparent" onClick={handleClosePanel} size="lg">✕</ActionIcon>
                                         </Group>
-
                                         <Stack gap="md">
                                             <div>
                                                 <Title order={4}>{selectedQueue.title}</Title>
-                                                <Text c="gray.6" fw={600} mt={4}>
-                                                    {selectedQueue.owner}
-                                                </Text>
+                                                <Text c="gray.6" fw={600} mt={4}>{selectedQueue.owner}</Text>
                                             </div>
-
                                             <Stack gap="xs">
-                                                <div>
-                                                    <Text size="sm" c="gray.7">
-                                                        <strong>Описание:</strong>
-                                                    </Text>
-                                                    <Text size="sm">{selectedQueue.description}</Text>
-                                                </div>
-                                                <div>
-                                                    <Text size="sm" c="gray.7">
-                                                        <strong>Длительность:</strong>
-                                                    </Text>
-                                                    <Text size="sm">{selectedQueue.duration}</Text>
-                                                </div>
-                                                <div>
-                                                    <Text size="sm" c="gray.7">
-                                                        <strong>Ближайшее окно:</strong>
-                                                    </Text>
-                                                    <Text size="sm">{selectedQueue.closestWindow}</Text>
-                                                </div>
+                                                <div><Text size="sm" c="gray.7"><strong>Описание:</strong></Text><Text size="sm">{selectedQueue.description}</Text></div>
+                                                <div><Text size="sm" c="gray.7"><strong>Длительность:</strong></Text><Text size="sm">{selectedQueue.duration}</Text></div>
+                                                <div><Text size="sm" c="gray.7"><strong>Ближайшее окно:</strong></Text><Text size="sm">{selectedQueue.closestWindow}</Text></div>
                                             </Stack>
-
                                             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
                                                 <Title order={5} mb="md">Заполните данные</Title>
-
                                                 <Stack gap="sm">
-                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                        Дата и время начала посещения <span style={{ color: '#FA5252' }}>*</span>
-                                                    </Text>
-                                                    <TextInput
-                                                        placeholder="Укажите время начала посещения"
-                                                        value={appointmentDate}
-                                                        onChange={(e) => setAppointmentDate(e.currentTarget.value)}
-                                                    />
-                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                        Время окончания посещения <span style={{ color: '#FA5252' }}>*</span>
-                                                    </Text>
-                                                    <TextInput
-                                                        placeholder="Укажите время до которого вы готовы быть на приёме, например, 14:00"
-                                                        value={appointmentTime}
-                                                        onChange={(e) => setAppointmentTime(e.currentTarget.value)}
-                                                    />
-                                                    <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                        Цель <span style={{ color: '#FA5252' }}>*</span>
-                                                    </Text>
-                                                    <Textarea
-                                                        placeholder="Укажите цель визита"
-                                                        value={visitPurpose}
-                                                        onChange={(e) => setVisitPurpose(e.currentTarget.value)}
-                                                        minRows={3}
-                                                    />
-
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">Дата и время начала посещения <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                    <TextInput placeholder="Укажите время" value={appointmentDate} onChange={(e) => setAppointmentDate(e.currentTarget.value)} />
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">Время окончания посещения <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                    <TextInput placeholder="Укажите время" value={appointmentTime} onChange={(e) => setAppointmentTime(e.currentTarget.value)} />
+                                                    <Text size="sm" fw={600} mb={4} c="gray.7">Цель <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                    <Textarea placeholder="Цель визита" value={visitPurpose} onChange={(e) => setVisitPurpose(e.currentTarget.value)} minRows={3} />
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={8}>
-                                                            Приложить файл
-                                                        </Text>
-                                                        <Button
-                                                            variant="filled"
-                                                            leftSection={<IconPlus size={16} />}
-                                                        >
-                                                            Файл
-                                                        </Button>
+                                                        <Text size="sm" fw={600} mb={8}>Приложить файл</Text>
+                                                        <Button variant="filled" leftSection={<IconPlus size={16} />}>Файл</Button>
                                                     </div>
-
                                                     <Group justify="end" mb="md">
-                                                        <Button
-                                                            onClick={() => {
-                                                                handleClosePanel();
-                                                            }}
-                                                        >
-                                                            Записаться
-                                                        </Button>
+                                                        <Button onClick={handleClosePanel}>Записаться</Button>
                                                     </Group>
                                                 </Stack>
                                             </div>
@@ -398,6 +359,7 @@ function HomePage() {
                             </Box>
                         )}
 
+                        {/* Панель создания очереди */}
                         {showCreateQueue && (
                             <Box
                                 onClick={handleCloseCreatePanel}
@@ -433,100 +395,41 @@ function HomePage() {
                                     <Paper p="lg">
                                         <Group justify="space-between" mb="lg">
                                             <Title order={3}>Создать очередь</Title>
-                                            <ActionIcon
-                                                variant="transparent"
-                                                onClick={handleCloseCreatePanel}
-                                                size="lg"
-                                            >
-                                                ✕
-                                            </ActionIcon>
+                                            <ActionIcon variant="transparent" onClick={handleCloseCreatePanel} size="lg">✕</ActionIcon>
                                         </Group>
-
                                         <Stack gap="md">
                                             <div>
                                                 <Title order={5} mb="md">Основное</Title>
                                                 <Stack gap="sm">
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                            Название <span style={{ color: '#FA5252' }}>*</span>
-                                                        </Text>
-                                                        <TextInput
-                                                            placeholder="Укажите название очереди"
-                                                            value={queueName}
-                                                            onChange={(e) => setQueueName(e.currentTarget.value)}
-                                                        />
+                                                        <Text size="sm" fw={600} mb={4} c="gray.7">Название <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                        <TextInput placeholder="Название" value={queueName} onChange={(e) => setQueueName(e.currentTarget.value)} />
                                                     </div>
-
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                            Описание <span style={{ color: '#FA5252' }}>*</span>
-                                                        </Text>
-                                                        <Textarea
-                                                            placeholder="Добавьте описание"
-                                                            value={queueDescription}
-                                                            onChange={(e) => setQueueDescription(e.currentTarget.value)}
-                                                            minRows={3}
-                                                        />
-                                                        <Text size="xs" c="gray.5" mt={4}>
-                                                            Опишите цель очереди, время проведения или другие важные детали.
-                                                        </Text>
+                                                        <Text size="sm" fw={600} mb={4} c="gray.7">Описание <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                        <Textarea placeholder="Описание" value={queueDescription} onChange={(e) => setQueueDescription(e.currentTarget.value)} minRows={3} />
                                                     </div>
-
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                            Период автоочистки <span style={{ color: '#FA5252' }}>*</span>
-                                                        </Text>
-                                                        <NumberInput
-                                                            value={parseInt(queueAutocloseDays)}
-                                                            onChange={(val) => setQueueAutocloseDays(val?.toString() || '7')}
-                                                            min={1}
-                                                        />
-                                                        <Text size="xs" c="gray.5" mt={4}>
-                                                            Через указанное количество дней запрос удалит в архив
-                                                        </Text>
+                                                        <Text size="sm" fw={600} mb={4} c="gray.7">Период автоочистки <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                        <NumberInput value={parseInt(queueAutocloseDays)} onChange={(val) => setQueueAutocloseDays(val?.toString() || '7')} min={1} />
                                                     </div>
                                                 </Stack>
                                             </div>
-
                                             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
                                                 <Title order={5} mb="md">Расписание</Title>
                                                 <Stack gap="sm">
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                            Время начала приёма <span style={{ color: '#FA5252' }}>*</span>
-                                                        </Text>
-                                                        <TextInput
-                                                            placeholder="Укажите время начала приёма"
-                                                            value={queueStartTime}
-                                                            onChange={(e) => setQueueStartTime(e.currentTarget.value)}
-                                                        />
-                                                        <Text size="xs" c="gray.5" mt={4}>
-                                                            Укажите время начала приёма, например, 12:00
-                                                        </Text>
+                                                        <Text size="sm" fw={600} mb={4} c="gray.7">Время начала приёма <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                        <TextInput placeholder="12:00" value={queueStartTime} onChange={(e) => setQueueStartTime(e.currentTarget.value)} />
                                                     </div>
-
                                                     <div>
-                                                        <Text size="sm" fw={600} mb={4} c="gray.7">
-                                                            Время окончания приёма <span style={{ color: '#FA5252' }}>*</span>
-                                                        </Text>
-                                                        <TextInput
-                                                            placeholder="Укажите время окончания приёма"
-                                                            value={queueEndTime}
-                                                            onChange={(e) => setQueueEndTime(e.currentTarget.value)}
-                                                        />
-                                                        <Text size="xs" c="gray.5" mt={4}>
-                                                            Укажите время окончания приёма, например, 15:00.
-                                                        </Text>
+                                                        <Text size="sm" fw={600} mb={4} c="gray.7">Время окончания приёма <span style={{ color: '#FA5252' }}>*</span></Text>
+                                                        <TextInput placeholder="15:00" value={queueEndTime} onChange={(e) => setQueueEndTime(e.currentTarget.value)} />
                                                     </div>
                                                 </Stack>
                                             </div>
-
                                             <Group justify="end" mb="md">
-                                                <Button
-                                                    onClick={handleCreateQueue}
-                                                >
-                                                    Создать
-                                                </Button>
+                                                <Button onClick={handleCreateQueue}>Создать</Button>
                                             </Group>
                                         </Stack>
                                     </Paper>

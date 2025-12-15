@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
     Paper,
     TextInput,
@@ -11,14 +11,49 @@ import {
     UnstyledButton,
     Group,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { api } from '../api/ApiClient';
 
 function AuthPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
+    const navigate = useNavigate();
 
-    const handleAuth = () => {
-        // Здесь будет логика входа
+    const handleAuth = async () => {
+        if (!email || !password) {
+             notifications.show({
+                title: 'Ошибка валидации',
+                message: 'Пожалуйста, заполните все поля',
+                color: 'red',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const response = await api.request<{ access_token: string }>('/api/v1/auth/login', 'POST', {
+                email,
+                password
+            });
+            
+            api.setToken(response.access_token);
+            
+            navigate('/'); 
+        } catch (error: any) {
+            console.error("Ошибка входа:", error);
+            
+            notifications.show({
+                title: 'Ошибка входа',
+                message: error.message || 'Неверный логин или пароль',
+                color: 'red',
+                autoClose: 5000,
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -51,23 +86,26 @@ function AuthPage() {
                             value={email}
                             onChange={(e) => setEmail(e.currentTarget.value)}
                             type="email"
+                            disabled={isLoading}
                         />
 
                         <PasswordInput
                             placeholder="Пароль"
                             value={password}
                             onChange={(e) => setPassword(e.currentTarget.value)}
+                            disabled={isLoading}
                         />
 
                         <Group justify="end">
                             <UnstyledButton component={Link} to="/recovery-password">Забыли пароль?</UnstyledButton>
                         </Group>
 
-                        <Button component={Link} to="/"
+                        <Button 
                             fullWidth
                             mt="md"
                             size="md"
                             onClick={handleAuth}
+                            loading={isLoading}
                         >
                             Войти
                         </Button>
