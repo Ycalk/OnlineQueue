@@ -64,6 +64,8 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_LOGIN=${RABBITMQ_LOGIN}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+
+      - ALLOW_ORIGIN_REGEX=${ALLOW_ORIGIN_REGEX}
     depends_on:
       postgres:
         condition: service_healthy

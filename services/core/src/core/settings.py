@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
     encoding_algorithm: str = "HS256"
     refresh_token_cookie_name: str = "refresh_token"
+    allow_origin_regex: str = r"^(http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?)$"
 
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672

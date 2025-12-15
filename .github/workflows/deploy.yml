@@ -48,6 +48,8 @@ jobs:
           echo "RABBITMQ_LOGIN=${{ secrets.RABBITMQ_LOGIN }}" >> .env
           echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
 
+          echo "ALLOW_ORIGIN_REGEX=$(echo "${{ vars.ALLOW_ORIGIN_REGEX_BASE64 }}" | base64 -d)" >> .env
+
       - name: Transfer files to server
         uses: appleboy/scp-action@v1
         with:

@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
 from importlib.metadata import version
+
 from core.settings import settings
 from shared.providers import (
     PersistenceProvider,
@@ -46,6 +48,14 @@ app = FastAPI(
             ),
         }
     },
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=settings.allow_origin_regex, 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 container = make_async_container(
