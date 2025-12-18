@@ -20,8 +20,8 @@ services:
   rabbitmq:
     image: rabbitmq:4.2.1-management-alpine
     restart: always
-    # ports:
-    #   - "127.0.0.1:15672:15672"
+    ports:
+      - "127.0.0.1:15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_LOGIN}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
