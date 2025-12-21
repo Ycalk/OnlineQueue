@@ -8,13 +8,11 @@ from .handlers.base import BaseEventHandler
 from .settings import settings
 
 from .handlers import (
-    OnUserRegistered,
     OnUserLogin,
     OnRequestCreated,
     OnRequestAccepted,
     OnRequestTimeChanged,
     OnCommentAdded,
-    OnRequestCancelled,
     OnRequestRejected,
     OnRequestRequeued,
     OnQueueCreated,
@@ -26,22 +24,16 @@ class EventHandlersProvider(Provider):
     @provide(scope=Scope.APP)
     def get_handlers(self) -> list[type[BaseEventHandler]]:
         return [
-            OnUserRegistered,
             OnUserLogin,
             OnRequestCreated,
             OnRequestAccepted,
             OnRequestTimeChanged,
             OnCommentAdded,
-            # OnRequestCancelled,
             OnRequestRejected,
             OnRequestRequeued,
-            # OnQueueCreated,
+            OnQueueCreated,
             OnRequestArchived,
         ]
-
-    @provide(scope=Scope.REQUEST)
-    def get_on_user_registered(self, session: AsyncSession) -> OnUserRegistered:
-        return OnUserRegistered(session)
 
     @provide(scope=Scope.REQUEST)
     def get_on_user_login(self, session: AsyncSession, bot: Bot) -> OnUserLogin:
@@ -68,12 +60,6 @@ class EventHandlersProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_on_comment_added(self, session: AsyncSession, bot: Bot) -> OnCommentAdded:
         return OnCommentAdded(session, bot)
-
-    @provide(scope=Scope.REQUEST)
-    def get_on_request_cancelled(
-        self, session: AsyncSession, bot: Bot
-    ) -> OnRequestCancelled:
-        return OnRequestCancelled(session, bot)
 
     @provide(scope=Scope.REQUEST)
     def get_on_request_rejected(

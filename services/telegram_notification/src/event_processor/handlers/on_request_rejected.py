@@ -24,14 +24,17 @@ class OnRequestRejected(BaseEventHandler[RequestRejected]):
         if not request:
             return
 
+        request.status = "rejected"
+        await self.session.commit()
+
         queue = await self.session.get(Queue, request.queue_id)
         user = await self.session.get(TelegramUser, request.user_id)
-        if not user or user.telegram_id == 0:
+        if not user:
             return
 
         try:
             queue_name = queue.name if queue else "Неизвестная очередь"
-            message = f"❌ Твоя заявка отклонена\n\nОчередь: {queue_name}"
+            message = f"❌ Ваша заявка отклонена\n\nОчередь: {queue_name}"
             await self.bot.send_message(user.telegram_id, message)
         except Exception as e:
             self.logger.error(f"Failed to send notification: {e}")

@@ -28,7 +28,7 @@ class OnCommentAdded(BaseEventHandler[CommentAdded]):
         if not queue:
             return
 
-        if event.author_id == queue.owner_id:
+        if event.author_id.hex == queue.owner_id.hex:
             notify_user_id = request.user_id
         else:
             notify_user_id = queue.owner_id

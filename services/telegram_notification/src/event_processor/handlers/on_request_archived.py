@@ -3,7 +3,7 @@ from aiogram import Bot
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.models import TelegramUser
+from bot.models import TelegramUser, Request
 from .base import BaseEventHandler
 from event_processor.events import RequestArchived
 
@@ -28,19 +28,23 @@ class OnRequestArchived(BaseEventHandler[RequestArchived]):
         )
         user = result.scalar_one_or_none()
 
-        if not user or user.telegram_id == 0:
+        if not user:
+            return
+
+        request = await self.session.get(Request, event.request_id)
+        if not request:
             return
 
         try:
             status_messages = {
-                "completed": "✅ Заявка завершена",
-                "rejected": "❌ Заявка отклонена и архивирована",
-                "cancelled": "🚫 Заявка отменена и архивирована",
+                "accepted": "✅ Заявка завершена",
+                "rejected": "❌ Заявка отклонена",
+                "pending": "🚫 Заявка отменена",
             }
             message = status_messages.get(
                 event.status, f"📦 Заявка архивирована (статус: {event.status})"
             )
-            message += f"\n\nID: {event.request_id}"
+            message += f"\n\nЦель: {request.purpose}"
 
             await self.bot.send_message(user.telegram_id, message)
             self.logger.info(f"Notification sent to {user.telegram_id}")

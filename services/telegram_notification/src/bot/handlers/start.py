@@ -31,9 +31,9 @@ async def start_command(
 
     if not command.args:
         await message.answer(
-            "Привет! Я бот для уведомлений в онлайн-очереди.\n\n"
-            "Чтобы получать уведомления, тебе нужно привязать свой аккаунт в сервисе к телеграм аккаунту.\n"
-            "Для этого в разделе «Профиль» на сайте кликни на иконку телеграмма."
+            "Здравствуйте! Это бот для уведомлений в онлайн-очереди.\n\n"
+            "Чтобы получать уведомления, вам нужно привязать свой аккаунт в сервисе к телеграм аккаунту.\n"
+            "Для этого в разделе «Профиль» на сайте нажмите на иконку телеграмма."
         )
         return
 
@@ -53,7 +53,7 @@ async def start_command(
     existing = result.scalar_one_or_none()
 
     if existing:
-        await message.answer("Твой Telegram уже привязан к аккаунту.")
+        await message.answer("Этот Telegram уже привязан к аккаунту.")
         return
 
     session.add(
@@ -65,6 +65,6 @@ async def start_command(
 
     await session.commit()
     await message.answer(
-        "✅ Аккаунт успешно привязан! Теперь ты будешь получать уведомления."
+        "✅ Аккаунт успешно привязан! Теперь вы будете получать уведомления в Telegram."
     )
     logger.info(f"Linked user_id={user_uuid} to telegram_id={message.from_user.id}")

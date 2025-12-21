@@ -1,5 +1,4 @@
 from .base import BaseEvent
-from .user_registered import UserRegistered
 from .user_login import UserLogin
 from .request_created import RequestCreated
 from .request_accepted import RequestAccepted
@@ -13,7 +12,6 @@ from .request_archived import RequestArchived
 
 __all__ = [
     "BaseEvent",
-    "UserRegistered",
     "UserLogin",
     "RequestCreated",
     "RequestAccepted",

@@ -1,3 +1,4 @@
+from datetime import date, time
 from uuid import UUID
 from typing import ClassVar
 
@@ -10,3 +11,8 @@ class RequestCreated(BaseEvent):
     request_id: UUID
     user_id: UUID
     queue_id: UUID
+    purpose: str
+
+    preferred_date: date
+    preferred_time_start: time
+    preferred_time_end: time

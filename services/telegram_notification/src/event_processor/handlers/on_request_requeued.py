@@ -1,9 +1,8 @@
 from logging import getLogger
 from aiogram import Bot
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.models import TelegramUser
+from bot.models import TelegramUser, Request, Queue
 from .base import BaseEventHandler
 from event_processor.events import RequestRequeued
 
@@ -21,16 +20,24 @@ class OnRequestRequeued(BaseEventHandler[RequestRequeued]):
     async def __call__(self, event: RequestRequeued) -> None:
         self.logger.info(f"Request {event.request_id} requeued")
 
-        result = await self.session.execute(
-            select(TelegramUser).where(TelegramUser.user_id == event.user_id)
-        )
-        user = result.scalar_one_or_none()
+        request = await self.session.get(Request, event.request_id)
+        if not request:
+            return
 
-        if not user or user.telegram_id == 0:
+        request.status = "pending"
+        await self.session.commit()
+
+        user = await self.session.get(TelegramUser, request.user_id)
+
+        queue = await self.session.get(Queue, request.queue_id)
+        if not queue:
+            return
+
+        if not user:
             return
 
         try:
-            message = f"🔄 Заявка возвращена в очередь\n\nID: {event.request_id}"
+            message = f"🔄 Заявка возвращена в очередь\n\nОчередь: {queue.name}\nЦель визита: {request.purpose}"
             await self.bot.send_message(user.telegram_id, message)
             self.logger.info(f"Notification sent to {user.telegram_id}")
         except Exception as e:

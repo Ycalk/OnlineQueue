@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time
 from uuid import UUID
 
 from sqlalchemy import BigInteger, String, func, ForeignKey
@@ -22,9 +22,7 @@ class Queue(Base):
     __tablename__ = "queues"
 
     queue_id: Mapped[UUID] = mapped_column(primary_key=True)
-    owner_id: Mapped[UUID] = mapped_column(
-        ForeignKey("telegram_users.user_id"), index=True
-    )
+    owner_id: Mapped[UUID] = mapped_column(index=True)
     name: Mapped[str] = mapped_column(String(255))
 
 
@@ -32,9 +30,11 @@ class Request(Base):
     __tablename__ = "requests"
 
     request_id: Mapped[UUID] = mapped_column(primary_key=True)
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey("telegram_users.user_id"), index=True
-    )
+    user_id: Mapped[UUID] = mapped_column(index=True)
     queue_id: Mapped[UUID] = mapped_column(ForeignKey("queues.queue_id"), index=True)
+    purpose: Mapped[str] = mapped_column(String(1000))
+    preferred_date: Mapped[date] = mapped_column()
+    preferred_time_start: Mapped[time] = mapped_column()
+    preferred_time_end: Mapped[time] = mapped_column()
 
     status: Mapped[str] = mapped_column(String(50), default="pending")

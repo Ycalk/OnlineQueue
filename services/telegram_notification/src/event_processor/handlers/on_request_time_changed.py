@@ -32,7 +32,7 @@ class OnRequestTimeChanged(BaseEventHandler[RequestTimeChanged]):
         try:
             queue_name = queue.name if queue else "Неизвестная очередь"
             message = (
-                f"🔄 Время твоей записи изменено!\n\n"
+                f"🔄 Время вашей записи изменено!\n\n"
                 f"Очередь: {queue_name}\n"
                 f"📅 Новая дата: {event.new_confirmed_date.strftime('%d.%m.%Y')}\n"
                 f"🕐 Новое время: {event.new_confirmed_time_start.strftime('%H:%M')} - "

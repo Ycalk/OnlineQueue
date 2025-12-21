@@ -25,19 +25,30 @@ class OnRequestCreated(BaseEventHandler[RequestCreated]):
             user_id=event.user_id,
             queue_id=event.queue_id,
             status="pending",
+            purpose=event.purpose,
+            preferred_date=event.preferred_date,
+            preferred_time_start=event.preferred_time_start,
+            preferred_time_end=event.preferred_time_end,
         )
         self.session.add(request)
         await self.session.commit()
 
         queue = await self.session.get(Queue, event.queue_id)
 
-        user = await self.session.get(TelegramUser, event.user_id)
-        if not user or user.telegram_id == 0:
+        if queue is None:
+            return
+
+        user = await self.session.get(TelegramUser, queue.owner_id)
+        if not user:
             return
 
         try:
-            queue_name = queue.name if queue else "Неизвестная очередь"
-            message = f"📝 Новая заявка создана!\n\nОчередь: {queue_name}"
+            message = (
+                f"📝 Новая заявка!\n\nПоступила новая заявка в очередь: {queue.name}"
+                f"\nЦель визита: {event.purpose}\n\n"
+                f"Дата: {event.preferred_date.strftime('%d.%m.%Y')} с "
+                f"{event.preferred_time_start.strftime('%H:%M')} до {event.preferred_time_end.strftime('%H:%M')}"
+            )
             await self.bot.send_message(user.telegram_id, message)
         except Exception as e:
             self.logger.error(f"Failed to send notification: {e}")
