@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     rabbitmq_login: str = "guest"
     rabbitmq_password: str = "guest"
 
+    notifications_bot_username: str
+    aessiv_hex_key: str
+
     @model_validator(mode="after")
     def validate_production_requirements(self) -> Self:
         if not self.debug:
