@@ -20,23 +20,21 @@ class OnQueueCreated(BaseEventHandler[QueueCreated]):
 
     async def __call__(self, event: QueueCreated) -> None:
         self.logger.info(f"Queue {event.queue_id} created by {event.owner_id}")
-        
+
         queue = Queue(
-            queue_id=event.queue_id,
-            owner_id=event.owner_id,
-            name=event.queue_name
+            queue_id=event.queue_id, owner_id=event.owner_id, name=event.queue_name
         )
         self.session.add(queue)
         await self.session.commit()
-        
+
         result = await self.session.execute(
             select(TelegramUser).where(TelegramUser.user_id == event.owner_id)
         )
         owner = result.scalar_one_or_none()
-        
+
         if not owner or owner.telegram_id == 0:
             return
-        
+
         try:
             message = f"🎯 Новая очередь создана!\n\nНазвание: {event.queue_name}\nID: {event.queue_id}"
             await self.bot.send_message(owner.telegram_id, message)

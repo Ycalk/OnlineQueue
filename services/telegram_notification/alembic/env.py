@@ -22,7 +22,7 @@ config = context.config
 config.set_main_option(
     "sqlalchemy.url",
     f"postgresql://{settings.postgres_user}:{settings.postgres_password}@"
-    f"{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
+    f"{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}",
 )
 
 # Interpret the config file for Python logging.
@@ -58,9 +58,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

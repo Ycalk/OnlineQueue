@@ -19,16 +19,16 @@ class OnRequestRejected(BaseEventHandler[RequestRejected]):
 
     async def __call__(self, event: RequestRejected) -> None:
         self.logger.info(f"Request {event.request_id} rejected")
-        
+
         request = await self.session.get(Request, event.request_id)
         if not request:
             return
-        
+
         queue = await self.session.get(Queue, request.queue_id)
         user = await self.session.get(TelegramUser, request.user_id)
         if not user or user.telegram_id == 0:
             return
-        
+
         try:
             queue_name = queue.name if queue else "Неизвестная очередь"
             message = f"❌ Твоя заявка отклонена\n\nОчередь: {queue_name}"

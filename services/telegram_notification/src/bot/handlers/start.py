@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from logging import getLogger
 
 import jwt
@@ -23,14 +22,14 @@ async def start_any(
     session: FromDishka[AsyncSession],
 ):
     logger.info(f"Received /start: text={message.text!r}, args={command.args!r}")
-    
+
     if not command.args:
         await message.answer(
             "Привет! Я бот для уведомлений OnlineQueue.\n\n"
             "Чтобы привязать свой аккаунт, используй команду /link"
         )
         return
-    
+
     token = command.args
     await process_link_token(message, session, token)
 
@@ -51,10 +50,10 @@ async def link_command(message: Message):
 async def process_manual_token(message: Message, session: FromDishka[AsyncSession]):
     """Обработка токена, отправленного как обычное сообщение"""
     token = message.text.strip()
-    
+
     if token.count(".") != 2 or len(token) < 50:
         return
-    
+
     await process_link_token(message, session, token)
 
 
@@ -102,7 +101,9 @@ async def process_link_token(message: Message, session: AsyncSession, token: str
         logger.info(f"Linked user_id={user_id} to telegram_id={telegram_id}")
 
     except jwt.ExpiredSignatureError:
-        await message.answer("⏰ Токен истёк. Сгенерируй новую ссылку в личном кабинете.")
+        await message.answer(
+            "⏰ Токен истёк. Сгенерируй новую ссылку в личном кабинете."
+        )
     except jwt.InvalidTokenError:
         pass
     except Exception as e:

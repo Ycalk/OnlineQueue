@@ -1,6 +1,5 @@
 from logging import getLogger
 from aiogram import Bot
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.models import TelegramUser, Request, Queue
@@ -20,16 +19,16 @@ class OnRequestTimeChanged(BaseEventHandler[RequestTimeChanged]):
 
     async def __call__(self, event: RequestTimeChanged) -> None:
         self.logger.info(f"Request {event.request_id} time changed")
-        
+
         request = await self.session.get(Request, event.request_id)
         if not request:
             return
-        
+
         queue = await self.session.get(Queue, request.queue_id)
         user = await self.session.get(TelegramUser, request.user_id)
         if not user or user.telegram_id == 0:
             return
-        
+
         try:
             queue_name = queue.name if queue else "Неизвестная очередь"
             message = (

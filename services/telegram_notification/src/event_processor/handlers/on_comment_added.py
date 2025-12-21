@@ -19,24 +19,24 @@ class OnCommentAdded(BaseEventHandler[CommentAdded]):
 
     async def __call__(self, event: CommentAdded) -> None:
         self.logger.info(f"Comment added to request {event.request_id}")
-        
+
         request = await self.session.get(Request, event.request_id)
         if not request:
             return
-        
+
         queue = await self.session.get(Queue, request.queue_id)
         if not queue:
             return
-        
+
         if event.author_id == queue.owner_id:
             notify_user_id = request.user_id
         else:
             notify_user_id = queue.owner_id
-        
+
         user = await self.session.get(TelegramUser, notify_user_id)
         if not user or user.telegram_id == 0:
             return
-        
+
         try:
             message = (
                 f"💬 Новый комментарий к заявке\n\n"

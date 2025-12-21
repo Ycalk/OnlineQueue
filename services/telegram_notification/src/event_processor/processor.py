@@ -114,7 +114,9 @@ class EventProcessor:
                     try:
                         event_type = handler_cls.event_type()
                         event = event_type.model_validate_json(message.body)
-                        self._logger.info(f"Received event: {event_type.get_event_name()}")
+                        self._logger.info(
+                            f"Received event: {event_type.get_event_name()}"
+                        )
                         self._logger.info(f"Calling handler: {handler_cls.__name__}")
                         await handler(event)
                     except Exception as e:

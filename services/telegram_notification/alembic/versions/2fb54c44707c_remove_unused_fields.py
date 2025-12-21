@@ -1,18 +1,17 @@
 """Remove unused fields
 
 Revision ID: 2fb54c44707c
-Revises: 
+Revises:
 Create Date: 2025-12-21 14:08:23.610144
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2fb54c44707c'
+revision: str = "2fb54c44707c"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

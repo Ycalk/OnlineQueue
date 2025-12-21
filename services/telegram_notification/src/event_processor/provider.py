@@ -48,15 +48,21 @@ class EventHandlersProvider(Provider):
         return OnUserLogin(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_created(self, session: AsyncSession, bot: Bot) -> OnRequestCreated:
+    def get_on_request_created(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestCreated:
         return OnRequestCreated(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_accepted(self, session: AsyncSession, bot: Bot) -> OnRequestAccepted:
+    def get_on_request_accepted(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestAccepted:
         return OnRequestAccepted(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_time_changed(self, session: AsyncSession, bot: Bot) -> OnRequestTimeChanged:
+    def get_on_request_time_changed(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestTimeChanged:
         return OnRequestTimeChanged(session, bot)
 
     @provide(scope=Scope.REQUEST)
@@ -64,15 +70,21 @@ class EventHandlersProvider(Provider):
         return OnCommentAdded(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_cancelled(self, session: AsyncSession, bot: Bot) -> OnRequestCancelled:
+    def get_on_request_cancelled(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestCancelled:
         return OnRequestCancelled(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_rejected(self, session: AsyncSession, bot: Bot) -> OnRequestRejected:
+    def get_on_request_rejected(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestRejected:
         return OnRequestRejected(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_requeued(self, session: AsyncSession, bot: Bot) -> OnRequestRequeued:
+    def get_on_request_requeued(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestRequeued:
         return OnRequestRequeued(session, bot)
 
     @provide(scope=Scope.REQUEST)
@@ -80,7 +92,9 @@ class EventHandlersProvider(Provider):
         return OnQueueCreated(session, bot)
 
     @provide(scope=Scope.REQUEST)
-    def get_on_request_archived(self, session: AsyncSession, bot: Bot) -> OnRequestArchived:
+    def get_on_request_archived(
+        self, session: AsyncSession, bot: Bot
+    ) -> OnRequestArchived:
         return OnRequestArchived(session, bot)
 
 

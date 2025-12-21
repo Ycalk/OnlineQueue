@@ -11,4 +11,4 @@ class BaseEvent(BaseModel, ABC):
     @classmethod
     def get_event_name(cls) -> str:
         """Получить имя события для exchange"""
-        return cls.__dict__.get('name', cls.__name__)
+        return cls.__dict__.get("name", cls.__name__)
