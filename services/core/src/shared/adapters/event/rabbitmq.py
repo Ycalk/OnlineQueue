@@ -48,6 +48,9 @@ class RabbitMQEventPublisher(IEventPublisher):
         return exchange
 
     async def publish(self, event: DomainEvent) -> None:
+        if not self._connection or self._connection.is_closed:
+            await self.connect()
+
         exchange = await self._get_exchange(event.name)
 
         message = Message(
@@ -61,5 +64,7 @@ class RabbitMQEventPublisher(IEventPublisher):
         )
         try:
             await exchange.publish(message, routing_key="")
-        except aio_pika.exceptions.DeliveryError:
-            self._logger.warning(f"Message delivery failed for event '{event.name}'")
+        except aio_pika.exceptions.DeliveryError as e:
+            self._logger.error(f"Message delivery failed for event '{event.name}': {e}")
+        except Exception as e:
+            self._logger.error(f"Failed to publish event '{event.name}': {e}", exc_info=True)

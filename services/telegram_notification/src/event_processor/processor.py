@@ -67,13 +67,13 @@ class EventProcessor:
 
         event_type = handler_cls.event_type()
 
-        if event_type.name not in self._event_names:
-            self._event_names[event_type.name] = event_type
-        elif self._event_names[event_type.name] != event_type:
+        if event_type.get_event_name() not in self._event_names:
+            self._event_names[event_type.get_event_name()] = event_type
+        elif self._event_names[event_type.get_event_name()] != event_type:
             raise RuntimeError(
                 (
                     "Event names must be unique. "
-                    f"{event_type} and {self._event_names[event_type.name]} "
+                    f"{event_type} and {self._event_names[event_type.get_event_name()]} "
                     "have the same name."
                 )
             )
@@ -81,17 +81,17 @@ class EventProcessor:
         if not self._channel or self._channel.is_closed:
             raise RuntimeError("Channel is not available. Call connect() first.")
 
-        exchange = await self._get_exchange(event_type.name)
+        exchange = await self._get_exchange(event_type.get_event_name())
 
         queue = await self._channel.declare_queue(
-            name=f"{event_type.name}.bot_consumer",
+            name=f"{event_type.get_event_name()}.bot_consumer",
             durable=True,
         )
         await queue.bind(exchange)
 
         self._handlers.append((queue, handler_cls))
         self._logger.info(
-            f"Registered event handler: {handler_cls.__name__} for event: {event_type.__name__}"
+            f"Registered event handler: {handler_cls.__name__} for event: {event_type.get_event_name()}"
         )
 
     async def start_consumers(self):
@@ -114,7 +114,7 @@ class EventProcessor:
                     try:
                         event_type = handler_cls.event_type()
                         event = event_type.model_validate_json(message.body)
-                        self._logger.info(f"Received event: {event_type.__name__}")
+                        self._logger.info(f"Received event: {event_type.get_event_name()}")
                         self._logger.info(f"Calling handler: {handler_cls.__name__}")
                         await handler(event)
                     except Exception as e:

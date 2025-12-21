@@ -1,15 +1,34 @@
 import asyncio
-from dishka import make_async_container
-from aiogram import Bot  # noqa: F401
-from dishka.integrations.aiogram import setup_dishka, AiogramProvider  # noqa: F401
+from logging import getLogger
 
-from event_processor import (
-    EventProcessorProvider,
+from aiogram import Bot, Dispatcher, BaseMiddleware
+from aiogram.types import Update
+from dishka import make_async_container
+from dishka.integrations.aiogram import AiogramProvider, setup_dishka
+
+from src.event_processor import (
     EventHandlersProvider,
     EventProcessor,
+    EventProcessorProvider,
 )
+
+from .handlers import start
 from .provider import BotProvider
 from .utils.logs import setup_logging
+
+logger = getLogger("bot.run")
+
+
+class DebugMiddleware(BaseMiddleware):
+    """Логирует все входящие updates для отладки"""
+    async def __call__(self, handler, event: Update, data):
+        logger.info(f"📥 Incoming update: type={event.event_type}")
+        
+        # Логируем только message.text, если это message
+        if hasattr(event, 'message') and event.message:
+            logger.info(f"   message.text = {event.message.text!r}")
+        
+        return await handler(event, data)
 
 
 async def _run():
@@ -22,6 +41,33 @@ async def _run():
         AiogramProvider(),
     )
 
+    bot = await container.get(Bot)
+    dp = await container.get(Dispatcher)
+
+    # Подключаем Dishka к aiogram
+    setup_dishka(container, dp, auto_inject=True)
+
+    # Подключаем middleware для отладки
+    dp.update.middleware(DebugMiddleware())
+
+    # Регистрируем роутеры
+    dp.include_router(start.router)
+
+    try:
+        processor = await container.get(EventProcessor)
+        await processor.start_consumers()
+
+        logger.info("Starting bot polling...")
+        await dp.start_polling(bot)
+
+    finally:
+        await container.close()
+
+
+def run():
+    asyncio.run(_run())
+
+
     # После добавления инстанса бота в контейнер
     # вот это нужно раскомментировать:
     #
@@ -30,14 +76,3 @@ async def _run():
     #
     # если это раскомментировать, то можно использовать фичи dishka
     # в aiogram: https://dishka.readthedocs.io/en/stable/integrations/aiogram.html
-
-    try:
-        processor = await container.get(EventProcessor)
-        await processor.start_consumers()
-        await asyncio.Future()  # Это убрать, тут должно быть dispatcher.start_polling()
-    finally:
-        await container.close()
-
-
-def run():
-    asyncio.run(_run())

@@ -1,6 +1,9 @@
 from uuid import UUID
+from datetime import datetime, timedelta, timezone
+import jwt
 from fastapi import APIRouter, Depends, status
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
+from core.settings import settings
 from modules.user.domain.ports.inbound.use_cases import (
     IChangeEmail,
     IChangeName,
@@ -16,6 +19,7 @@ from .dto import (
     UpdateNameRequest,
     UpdatePasswordRequest,
     UserNameResponse,
+    TelegramLinkResponse
 )
 from modules.user.application.dto import User as UserResponse
 
@@ -131,6 +135,34 @@ async def update_password(
 
     return MessageResponse(message="Password updated successfully")
 
+@router.get("/telegram", status_code=status.HTTP_200_OK)
+async def get_telegram_link(
+    current_user_id: UUID = Depends(get_current_user_id),
+) -> TelegramLinkResponse:
+    """
+    Сгенерировать ссылку для привязки Telegram-аккаунта.
+
+    Формат ссылки:
+    https://t.me/online-queue-notification?start={jwt_token}
+    """
+    # время жизни токена 5 минут
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+    payload = {
+        "sub": str(current_user_id),          # идентификатор пользователя
+        "exp": expires_at,                    # время истечения
+        "type": "telegram_link",              # тип токена, для доп. проверки
+    }
+
+    token = jwt.encode(
+        payload,
+        settings.secret_key,                  # общий секрет проекта
+        algorithm=settings.encoding_algorithm,
+    )
+
+    link = f"https://t.me/online_queue_notification_bot?start={token}"
+
+    return TelegramLinkResponse(link=link)
 
 @router.get("/{user_id}", status_code=status.HTTP_200_OK)
 async def get_user_name(
