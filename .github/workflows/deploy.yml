@@ -40,15 +40,22 @@ jobs:
       - name: Create .env file
         run: |
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "AESSIV_HEX_KEY=${{ secrets.AESSIV_HEX_KEY }}" >> .env
 
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+          echo "CORE_POSTGRES_USER=${{ secrets.CORE_POSTGRES_USER }}" >> .env
+          echo "CORE_POSTGRES_PASSWORD=${{ secrets.CORE_POSTGRES_PASSWORD }}" >> .env
+          echo "CORE_POSTGRES_DB=${{ secrets.CORE_POSTGRES_DB }}" >> .env
+          
+          echo "NOTIFICATIONS_BOT_USERNAME=${{ vars.NOTIFICATIONS_BOT_USERNAME }}" >> .env
+          echo "ALLOW_ORIGIN_REGEX=$(echo "${{ vars.ALLOW_ORIGIN_REGEX_BASE64 }}" | base64 -d)" >> .env
+
+          echo "BOT_POSTGRES_USER=${{ secrets.BOT_POSTGRES_USER }}" >> .env
+          echo "BOT_POSTGRES_PASSWORD=${{ secrets.BOT_POSTGRES_PASSWORD }}" >> .env
+          echo "BOT_POSTGRES_DB=${{ secrets.BOT_POSTGRES_DB }}" >> .env
+          echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
 
           echo "RABBITMQ_LOGIN=${{ secrets.RABBITMQ_LOGIN }}" >> .env
           echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
-
-          echo "ALLOW_ORIGIN_REGEX=$(echo "${{ vars.ALLOW_ORIGIN_REGEX_BASE64 }}" | base64 -d)" >> .env
 
       - name: Transfer files to server
         uses: appleboy/scp-action@v1
