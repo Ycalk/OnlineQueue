@@ -44,9 +44,6 @@ class BotProvider(Provider):
         )
         engine = create_async_engine(url, echo=False)
 
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
         yield engine
         await engine.dispose()
 
