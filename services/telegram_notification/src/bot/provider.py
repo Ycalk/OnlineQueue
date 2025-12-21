@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from cryptography.hazmat.primitives.ciphers.aead import AESSIV
 
 from .models import Base
 from .settings import settings
@@ -61,3 +62,7 @@ class BotProvider(Provider):
     ) -> AsyncIterable[AsyncSession]:
         async with factory() as session:
             yield session
+
+    @provide(scope=Scope.APP)
+    def get_aessiv(self) -> AESSIV:
+        return AESSIV(bytes.fromhex(settings.aessiv_hex_key))

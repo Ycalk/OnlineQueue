@@ -32,10 +32,10 @@ class EventHandlersProvider(Provider):
             OnRequestAccepted,
             OnRequestTimeChanged,
             OnCommentAdded,
-            OnRequestCancelled,
+            # OnRequestCancelled,
             OnRequestRejected,
             OnRequestRequeued,
-            OnQueueCreated,
+            # OnQueueCreated,
             OnRequestArchived,
         ]
 

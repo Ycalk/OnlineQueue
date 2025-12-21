@@ -28,10 +28,14 @@ class Settings(BaseSettings):
     secret_key: str
     encoding_algorithm: str = "HS256"
 
+    aessiv_hex_key: str
+
+    binding_token_lifetime_seconds: int = 300
+
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
     rabbitmq_login: str = "guest"
     rabbitmq_password: str = "guest"
 
 
-settings: Final[Settings] = Settings()
+settings: Final[Settings] = Settings()  # type: ignore

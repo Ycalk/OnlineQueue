@@ -1,12 +1,15 @@
+import base64
+import struct
+import time
+from uuid import UUID
 from logging import getLogger
-
-import jwt
-from aiogram import Router, F
-from aiogram.filters import CommandStart, Command
+from aiogram import Router
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message
 from dishka import FromDishka
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from cryptography.hazmat.primitives.ciphers.aead import AESSIV
 
 from bot.models import TelegramUser
 from bot.settings import settings
@@ -16,96 +19,52 @@ logger = getLogger("bot.handlers.start")
 
 
 @router.message(CommandStart())
-async def start_any(
+async def start_command(
     message: Message,
-    command: CommandStart,
+    command: CommandObject,
     session: FromDishka[AsyncSession],
+    aessiv: FromDishka[AESSIV],
 ):
+    if message.from_user is None:
+        return
     logger.info(f"Received /start: text={message.text!r}, args={command.args!r}")
 
     if not command.args:
         await message.answer(
-            "Привет! Я бот для уведомлений OnlineQueue.\n\n"
-            "Чтобы привязать свой аккаунт, используй команду /link"
+            "Привет! Я бот для уведомлений в онлайн-очереди.\n\n"
+            "Чтобы получать уведомления, тебе нужно привязать свой аккаунт в сервисе к телеграм аккаунту.\n"
+            "Для этого в разделе «Профиль» на сайте кликни на иконку телеграмма."
         )
         return
 
     token = command.args
-    await process_link_token(message, session, token)
+    encrypted_bytes = base64.urlsafe_b64decode(token)
+    packed_data = aessiv.decrypt(encrypted_bytes, None)
+    uid_bytes, timestamp = struct.unpack(">16sI", packed_data)
+    user_uuid = UUID(bytes=uid_bytes)
 
-
-@router.message(Command("link"))
-async def link_command(message: Message):
-    """Инструкция для привязки аккаунта"""
-    await message.answer(
-        "📎 Чтобы привязать аккаунт:\n\n"
-        "1. Открой личный кабинет в браузере\n"
-        "2. Вызови GET /api/v1/users/telegram\n"
-        "3. Скопируй токен из ссылки (всё после ?start=)\n"
-        "4. Отправь его следующим сообщением сюда"
-    )
-
-
-@router.message(F.text)
-async def process_manual_token(message: Message, session: FromDishka[AsyncSession]):
-    """Обработка токена, отправленного как обычное сообщение"""
-    token = message.text.strip()
-
-    if token.count(".") != 2 or len(token) < 50:
+    if time.time() - timestamp > settings.binding_token_lifetime_seconds:
+        await message.answer("Токен привязки устарел.")
         return
 
-    await process_link_token(message, session, token)
+    result = await session.execute(
+        select(TelegramUser).where(TelegramUser.telegram_id == message.from_user.id)
+    )
+    existing = result.scalar_one_or_none()
 
+    if existing:
+        await message.answer("Твой Telegram уже привязан к аккаунту.")
+        return
 
-async def process_link_token(message: Message, session: AsyncSession, token: str):
-    """Общая логика обработки токена привязки"""
-    try:
-        payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[settings.encoding_algorithm],
+    session.add(
+        TelegramUser(
+            user_id=user_uuid,
+            telegram_id=message.from_user.id,
         )
+    )
 
-        if payload.get("type") != "telegram_link":
-            await message.answer("Неверный тип токена.")
-            return
-
-        user_id = payload.get("sub")
-        if not user_id:
-            await message.answer("В токене отсутствует идентификатор пользователя.")
-            return
-
-        telegram_id = message.from_user.id
-
-        result = await session.execute(
-            select(TelegramUser).where(TelegramUser.telegram_id == telegram_id)
-        )
-        existing = result.scalar_one_or_none()
-
-        if existing:
-            await message.answer(
-                f"Твой Telegram уже привязан к аккаунту {existing.email}."
-            )
-            return
-
-        new_user = TelegramUser(
-            user_id=user_id,
-            telegram_id=telegram_id,
-        )
-        session.add(new_user)
-        await session.commit()
-
-        await message.answer(
-            "✅ Аккаунт успешно привязан! Теперь ты будешь получать уведомления."
-        )
-        logger.info(f"Linked user_id={user_id} to telegram_id={telegram_id}")
-
-    except jwt.ExpiredSignatureError:
-        await message.answer(
-            "⏰ Токен истёк. Сгенерируй новую ссылку в личном кабинете."
-        )
-    except jwt.InvalidTokenError:
-        pass
-    except Exception as e:
-        logger.error(f"Error processing token: {e}", exc_info=True)
-        await message.answer("Произошла ошибка при обработке токена.")
+    await session.commit()
+    await message.answer(
+        "✅ Аккаунт успешно привязан! Теперь ты будешь получать уведомления."
+    )
+    logger.info(f"Linked user_id={user_uuid} to telegram_id={message.from_user.id}")
