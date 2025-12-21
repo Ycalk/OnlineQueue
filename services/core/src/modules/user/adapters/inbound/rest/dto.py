@@ -44,5 +44,6 @@ class UserNameResponse(BaseModel):
     last_name: str
     patronymic: str | None
 
+
 class TelegramLinkResponse(BaseModel):
     link: str = Field(description="Deep-link на Telegram-бота")

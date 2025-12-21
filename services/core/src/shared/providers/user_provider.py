@@ -1,6 +1,8 @@
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
+from cryptography.hazmat.primitives.ciphers.aead import AESSIV
 
+from core.settings import settings
 from modules.user.domain.ports.outbound import IUserRepository
 from modules.user.adapters.outbound.persistence.user_repository import UserRepository
 from modules.user.application.ports.outbound.user_reader import IUserReader
@@ -25,6 +27,11 @@ from shared.building_blocks.event import IEventPublisher
 
 
 class UserProvider(Provider):
+    @provide(scope=Scope.APP)
+    def get_aessiv(self) -> AESSIV:
+        aessiv_key = bytes.fromhex(settings.aessiv_hex_key)
+        return AESSIV(aessiv_key)
+
     @provide(scope=Scope.REQUEST)
     def get_user_repository(self, session: AsyncSession) -> IUserRepository:
         return UserRepository(session)

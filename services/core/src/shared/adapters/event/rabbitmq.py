@@ -67,4 +67,6 @@ class RabbitMQEventPublisher(IEventPublisher):
         except aio_pika.exceptions.DeliveryError as e:
             self._logger.error(f"Message delivery failed for event '{event.name}': {e}")
         except Exception as e:
-            self._logger.error(f"Failed to publish event '{event.name}': {e}", exc_info=True)
+            self._logger.error(
+                f"Failed to publish event '{event.name}': {e}", exc_info=True
+            )
