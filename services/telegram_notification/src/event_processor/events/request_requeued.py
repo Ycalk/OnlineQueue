@@ -5,7 +5,7 @@ from .base import BaseEvent
 
 
 class RequestRequeued(BaseEvent):
-    name: ClassVar[str] = "request_requeued"
+    name: ClassVar[str] = "request.requeued"
 
     request_id: UUID
     user_id: UUID

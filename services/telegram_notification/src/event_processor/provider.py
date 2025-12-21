@@ -39,7 +39,6 @@ class EventHandlersProvider(Provider):
             OnRequestArchived,
         ]
 
-    # Провайдеры для каждого обработчика
     @provide(scope=Scope.REQUEST)
     def get_on_user_registered(self, session: AsyncSession) -> OnUserRegistered:
         return OnUserRegistered(session)

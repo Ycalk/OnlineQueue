@@ -23,24 +23,21 @@ class OnUserRegistered(BaseEventHandler[UserRegistered]):
             f"Processing UserRegistered: user_id={event.user_id}, email={event.email}"
         )
 
-        # Проверяем, есть ли уже запись (может быть создана из /start)
         result = await self._session.execute(
             select(TelegramUser).where(TelegramUser.user_id == event.user_id)
         )
         user = result.scalar_one_or_none()
 
         if user:
-            # Обновляем данные (если были пустые после /start)
             user.email = event.email
             user.first_name = event.first_name
             user.last_name = event.last_name
             user.patronymic = event.patronymic
             self._logger.info(f"Updated existing user {event.user_id}")
         else:
-            # Создаём новую запись (без telegram_id — он появится при /start)
             new_user = TelegramUser(
                 user_id=event.user_id,
-                telegram_id=0,  # пока не привязан
+                telegram_id=0,
                 email=event.email,
                 first_name=event.first_name,
                 last_name=event.last_name,

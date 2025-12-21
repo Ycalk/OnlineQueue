@@ -5,9 +5,6 @@ from .base import BaseEvent
 
 
 class RequestRejected(BaseEvent):
-    name: ClassVar[str] = "request_rejected"
+    name: ClassVar[str] = "request.rejected"
 
     request_id: UUID
-    user_id: UUID
-    queue_id: UUID
-    reason: str | None

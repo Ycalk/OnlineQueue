@@ -15,15 +15,7 @@ class TelegramUser(Base):
     user_id: Mapped[UUID] = mapped_column(primary_key=True)
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
 
-    email: Mapped[str] = mapped_column(String(255))
-    first_name: Mapped[str] = mapped_column(String(100))
-    last_name: Mapped[str] = mapped_column(String(100))
-    patronymic: Mapped[str | None] = mapped_column(String(100), nullable=True)
-
     linked_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )
 
 
 class Queue(Base):
@@ -32,11 +24,6 @@ class Queue(Base):
     queue_id: Mapped[UUID] = mapped_column(primary_key=True)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("telegram_users.user_id"), index=True)
     name: Mapped[str] = mapped_column(String(255))
-
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )
 
 
 class Request(Base):
@@ -47,8 +34,3 @@ class Request(Base):
     queue_id: Mapped[UUID] = mapped_column(ForeignKey("queues.queue_id"), index=True)
     
     status: Mapped[str] = mapped_column(String(50), default="pending")
-
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
-    )

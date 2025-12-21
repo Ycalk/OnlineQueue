@@ -41,7 +41,7 @@ class BotProvider(Provider):
             f"postgresql+asyncpg://{settings.postgres_user}:{settings.postgres_password}"
             f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
         )
-        engine = create_async_engine(url, echo=settings.debug)
+        engine = create_async_engine(url, echo=False)
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)

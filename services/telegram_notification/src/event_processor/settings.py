@@ -17,4 +17,4 @@ class Settings(BaseSettings):
     rabbitmq_password: str = "guest"
 
 
-settings: Final[Settings] = Settings()  # type: ignore
+settings: Final[Settings] = Settings()

@@ -24,7 +24,6 @@ async def start_any(
 ):
     logger.info(f"Received /start: text={message.text!r}, args={command.args!r}")
     
-    # если args пустые — обычный старт
     if not command.args:
         await message.answer(
             "Привет! Я бот для уведомлений OnlineQueue.\n\n"
@@ -32,7 +31,6 @@ async def start_any(
         )
         return
     
-    # если args есть — обрабатываем как токен
     token = command.args
     await process_link_token(message, session, token)
 
@@ -54,9 +52,8 @@ async def process_manual_token(message: Message, session: FromDishka[AsyncSessio
     """Обработка токена, отправленного как обычное сообщение"""
     token = message.text.strip()
     
-    # Примитивная проверка: похоже ли на JWT (3 части через точку)
     if token.count(".") != 2 or len(token) < 50:
-        return  # игнорируем, это не токен
+        return
     
     await process_link_token(message, session, token)
 
@@ -81,7 +78,6 @@ async def process_link_token(message: Message, session: AsyncSession, token: str
 
         telegram_id = message.from_user.id
 
-        # Проверка, не привязан ли уже
         result = await session.execute(
             select(TelegramUser).where(TelegramUser.telegram_id == telegram_id)
         )
@@ -93,14 +89,9 @@ async def process_link_token(message: Message, session: AsyncSession, token: str
             )
             return
 
-        # Создаём запись
         new_user = TelegramUser(
             user_id=user_id,
             telegram_id=telegram_id,
-            email="",
-            first_name="",
-            last_name="",
-            patronymic=None,
         )
         session.add(new_user)
         await session.commit()
@@ -113,7 +104,6 @@ async def process_link_token(message: Message, session: AsyncSession, token: str
     except jwt.ExpiredSignatureError:
         await message.answer("⏰ Токен истёк. Сгенерируй новую ссылку в личном кабинете.")
     except jwt.InvalidTokenError:
-        # Не логируем, просто игнорируем невалидные токены (может быть обычный текст)
         pass
     except Exception as e:
         logger.error(f"Error processing token: {e}", exc_info=True)
