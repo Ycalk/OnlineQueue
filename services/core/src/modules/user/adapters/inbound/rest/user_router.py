@@ -32,13 +32,12 @@ router = APIRouter(
     tags=["users"],
     route_class=DishkaRoute,
     responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Пользователь с id из токена не найден",
-        },
         status.HTTP_401_UNAUTHORIZED: {
             "model": ErrorResponse,
             "description": "Токен не валиден",
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Токен доступа указан неверно",
         },
     },
 )
@@ -50,32 +49,26 @@ async def get_me(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> UserResponse:
     """
-    Получить информацию о текущем пользователе
+    Получить информацию о текущем пользователе.
+    \nВозможные ошибки:
+    \n`UserNotFoundError` - пользователь не найден
     """
     return await get_user_query(current_user_id)
 
 
-@router.patch(
-    "/email",
-    responses={
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Неверный пароль",
-        },
-        status.HTTP_409_CONFLICT: {
-            "model": ErrorResponse,
-            "description": "Пользователь с таким email уже зарегистрирован",
-        },
-    },
-    status_code=status.HTTP_200_OK,
-)
+@router.patch("/email", status_code=status.HTTP_200_OK)
 async def update_email(
     request: UpdateEmailRequest,
     change_email_uc: FromDishka[IChangeEmail],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить email текущего пользователя
+    Изменить email текущего пользователя.
+    \nВозможные ошибки:
+    \n`UserNotFoundError` - пользователь не найден
+    \n`UserAlreadyExistsError` - пользователь с таким email уже зарегистрирован
+    \n`InvalidPasswordError` - неверный пароль
+    \n`SameEmailError` - новый email совпадает с текущим
     """
     command = ChangeEmail(
         user_id=UserId(value=current_user_id),
@@ -95,7 +88,9 @@ async def update_name(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить имя текущего пользователя
+    Изменить имя текущего пользователя.
+    \nВозможные ошибки:
+    \n`UserNotFoundError` - пользователь не найден
     """
 
     command = ChangeName(
@@ -112,12 +107,6 @@ async def update_name(
 
 @router.patch(
     "/password",
-    responses={
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Неверный текущий пароль",
-        },
-    },
     status_code=status.HTTP_200_OK,
 )
 async def update_password(
@@ -126,7 +115,12 @@ async def update_password(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить пароль текущего пользователя
+    Изменить пароль текущего пользователя.
+    \nВозможные ошибки:
+    \n`UserNotFoundError` - пользователь не найден
+    \n`InvalidPasswordError` - неверный пароль
+    \n`SamePasswordError` - новый пароль совпадает с текущим
+    \n`WeakPasswordError` - пароль слишком слабый
     """
     command = ChangePassword(
         user_id=UserId(value=current_user_id),
@@ -146,9 +140,6 @@ async def get_telegram_link(
 ) -> TelegramLinkResponse:
     """
     Сгенерировать ссылку для привязки Telegram-аккаунта.
-
-    Формат ссылки:
-    https://t.me/{notifications_bot_username}?start={jwt_token}
     """
     timestamp = int(time.time())
     packed_data = struct.pack(">16sI", current_user_id.bytes, timestamp)
@@ -164,10 +155,11 @@ async def get_telegram_link(
 async def get_user_name(
     user_id: UUID,
     get_user_query: FromDishka[IGetUser],
-    _: UUID = Depends(get_current_user_id),
 ) -> UserNameResponse:
     """
-    Получить информацию о пользователе
+    Получить информацию о имени пользователя.
+    \nВозможные ошибки:
+    \n`UserNotFoundError` - пользователь не найден
     """
 
     user = await get_user_query(user_id)

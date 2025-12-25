@@ -1,6 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
+
 from modules.queue.domain.ports.inbound.use_cases import (
     ICreateQueue,
     IActivateQueue,
@@ -52,6 +53,9 @@ router = APIRouter(
             "model": ErrorResponse,
             "description": "Токен не валиден",
         },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Токен доступа указан неверно",
+        },
     },
 )
 
@@ -63,7 +67,9 @@ async def create_queue(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> QueueCreatedResponse:
     """
-    Создать новую очередь
+    Создать новую очередь.
+    \nВозможные ошибки:
+    \n`TimePeriodNotValid` - время приема очереди не валидно
     """
     command = CreateQueue(
         requester=UserId(value=current_user_id),
@@ -88,10 +94,9 @@ async def get_queue_list(
     get_queue_list_query: FromDishka[IGetQueueList],
     skip: int = 0,
     limit: int | None = None,
-    current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Queue]:
     """
-    Получить список очередей
+    Получить список очередей.
     """
     command = GetQueueList(
         skip=skip,
@@ -107,7 +112,7 @@ async def get_my_queue_list(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[QueueWithRequests]:
     """
-    Получить список очередей текущего пользователя
+    Получить список очередей текущего пользователя.
     """
 
     return await get_owner_queue_list_query(current_user_id)
@@ -117,27 +122,16 @@ async def get_my_queue_list(
 async def get_queue(
     queue_id: UUID,
     get_queue_query: FromDishka[IGetQueue],
-    current_user_id: UUID = Depends(get_current_user_id),
 ) -> Queue:
     """
-    Получить очередь
+    Получить очередь.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
     """
     return await get_queue_query(queue_id)
 
 
-@router.patch(
-    "/{queue_id}/name",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.patch("/{queue_id}/name", status_code=status.HTTP_200_OK)
 async def update_queue_name(
     queue_id: UUID,
     request: UpdateQueueNameRequest,
@@ -145,7 +139,10 @@ async def update_queue_name(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить название очереди
+    Изменить название очереди.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
     """
     command = ChangeName(
         requester=UserId(value=current_user_id),
@@ -158,19 +155,7 @@ async def update_queue_name(
     return MessageResponse(message="Queue name updated successfully")
 
 
-@router.patch(
-    "/{queue_id}/description",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.patch("/{queue_id}/description", status_code=status.HTTP_200_OK)
 async def update_queue_description(
     queue_id: UUID,
     request: UpdateQueueDescriptionRequest,
@@ -178,7 +163,10 @@ async def update_queue_description(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить описание очереди
+    Изменить описание очереди.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
     """
     command = ChangeDescription(
         requester=UserId(value=current_user_id),
@@ -191,19 +179,7 @@ async def update_queue_description(
     return MessageResponse(message="Queue description updated successfully")
 
 
-@router.patch(
-    "/{queue_id}/cleanup-period",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.patch("/{queue_id}/cleanup-period", status_code=status.HTTP_200_OK)
 async def update_cleanup_period(
     queue_id: UUID,
     request: UpdateCleanupPeriodRequest,
@@ -211,7 +187,10 @@ async def update_cleanup_period(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Изменить период очистки архивных заявок
+    Изменить период очистки.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
     """
     command = ChangeCleanupPeriod(
         requester=UserId(value=current_user_id),
@@ -224,26 +203,18 @@ async def update_cleanup_period(
     return MessageResponse(message="Cleanup period updated successfully")
 
 
-@router.post(
-    "/{queue_id}/activate",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.post("/{queue_id}/activate", status_code=status.HTTP_200_OK)
 async def activate_queue(
     queue_id: UUID,
     activate_queue_uc: FromDishka[IActivateQueue],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Активировать очередь
+    Активировать очередь.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
+    \n`CannotActivateActiveQueue` - очередь уже активна
     """
     command = ActivateQueue(
         requester=UserId(value=current_user_id),
@@ -255,26 +226,18 @@ async def activate_queue(
     return MessageResponse(message="Queue activated successfully")
 
 
-@router.post(
-    "/{queue_id}/deactivate",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.post("/{queue_id}/deactivate", status_code=status.HTTP_200_OK)
 async def deactivate_queue(
     queue_id: UUID,
     deactivate_queue_uc: FromDishka[IDeactivateQueue],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Деактивировать очередь
+    Деактивировать очередь.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
+    \n`CannotDeactivateAlreadyDeactivatedQueue` - очередь уже деактивирована
     """
     command = DeactivateQueue(
         requester=UserId(value=current_user_id),
@@ -286,26 +249,17 @@ async def deactivate_queue(
     return MessageResponse(message="Queue deactivated successfully")
 
 
-@router.post(
-    "/{queue_id}/toggle",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Очередь с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения очереди",
-        },
-    },
-)
+@router.post("/{queue_id}/toggle", status_code=status.HTTP_200_OK)
 async def toggle_queue_activity(
     queue_id: UUID,
     toggle_queue_activity_uc: FromDishka[IToggleQueueActivity],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Переключить статус активности очереди (активная <-> неактивная)
+    Переключить статус активности очереди (активная <-> неактивная).
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - нет прав
     """
     command = ToggleQueueActivity(
         requester=UserId(value=current_user_id),

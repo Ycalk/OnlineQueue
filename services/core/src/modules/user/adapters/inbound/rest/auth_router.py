@@ -42,16 +42,6 @@ def clear_refresh_token_cookie(response: Response) -> None:
     "/register",
     response_model=TokenResponse,
     status_code=status.HTTP_201_CREATED,
-    responses={
-        status.HTTP_409_CONFLICT: {
-            "model": ErrorResponse,
-            "description": "Пользователь с таким email уже зарегистрирован",
-        },
-        status.HTTP_400_BAD_REQUEST: {
-            "model": ErrorResponse,
-            "description": "Слишком слабый пароль",
-        },
-    },
 )
 async def register(
     request: RegisterRequest,
@@ -59,7 +49,10 @@ async def register(
     create_user_uc: FromDishka[ICreateUser],
 ):
     """
-    Регистрация нового пользователя
+    Регистрация нового пользователя.
+    \nВозможные ошибки:
+    \n`UserAlreadyExistsError` - пользователь с таким email уже зарегистрирован
+    \n`WeakPasswordError` - пароль слишком слабый
     """
     command = CreateUser(
         email=Email(value=request.email),
@@ -82,18 +75,14 @@ async def register(
 @router.post(
     "/login",
     response_model=TokenResponse,
-    responses={
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": ErrorResponse,
-            "description": "Неверные email или пароль",
-        }
-    },
 )
 async def login(
     request: LoginRequest, response: Response, verify_uc: FromDishka[ILogin]
 ):
     """
-    Аутентификация пользователя
+    Аутентификация пользователя.
+    \nВозможные ошибки:
+    \n`InvalidCredentialsError` - неверный email или пароль
     """
     try:
         command = Login(
@@ -106,10 +95,11 @@ async def login(
         set_refresh_token_cookie(response, refresh_token)
 
         return TokenResponse(access_token=access_token)
-
-    except (UserNotFoundError, InvalidPasswordError) as e:
-        raise CustomHTTPException.from_exception(
-            e, status_code=status.HTTP_401_UNAUTHORIZED
+    except (UserNotFoundError, InvalidPasswordError):
+        raise CustomHTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            message=f"User with email {request.email} not found or invalid password",
+            error="InvalidCredentialsError",
         )
 
 
@@ -131,7 +121,11 @@ async def refresh_access_token(
     refresh_token: str | None = Cookie(None, alias=settings.refresh_token_cookie_name),
 ):
     """
-    Обновление токена доступа
+    Обновление токена доступа.
+    \nВозможные ошибки:
+    \n`RefreshTokenNotFoundError` - refresh токена нет в куках
+    \n`RefreshTokenExpiredError` - refresh токен истек
+    \n`InvalidRefreshTokenError` - refresh токен невалиден
     """
     if not refresh_token:
         raise CustomHTTPException(
@@ -168,7 +162,7 @@ async def refresh_access_token(
 @router.post("/logout", response_model=MessageResponse)
 async def logout(response: Response):
     """
-    Выход из аккаунта
+    Выход из аккаунта.
     """
     clear_refresh_token_cookie(response)
     return MessageResponse(message="Logged out successfully")

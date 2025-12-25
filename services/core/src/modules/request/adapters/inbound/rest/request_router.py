@@ -1,5 +1,4 @@
 from uuid import UUID
-
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Depends, status, Body
 
@@ -54,6 +53,9 @@ router = APIRouter(
             "model": ErrorResponse,
             "description": "Токен не валиден",
         },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Токен доступа указан неверно",
+        },
     },
 )
 
@@ -66,6 +68,11 @@ async def create_request(
 ) -> RequestCreatedResponse:
     """
     Создать новую запись в очереди.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`CannotCreateRequestToInactiveQueue` - нельзя создавать визит в неактивную очередь
+    \n`TimeMustBeInsideQueueReceptionTime` - время визита должно быть внутри времени приема очереди
+    \n`TimePeriodNotValid` - время визита не валидно
     """
     command = CreateRequest(
         requester=UserId(value=current_user_id),
@@ -92,6 +99,9 @@ async def get_my_requests(
     limit: int | None = None,
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
+    """
+    Получить записи пользователя.
+    """
     return await get_user_requests_query(
         GetUserRequestsQueryDTO(user_id=current_user_id, skip=skip, limit=limit)
     )
@@ -102,6 +112,9 @@ async def get_requests_in_my_queues(
     get_queue_requests_query: FromDishka[IGetQueueOwnerRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
+    """
+    Получить записи в очередях пользователя.
+    """
     return await get_queue_requests_query(current_user_id)
 
 
@@ -111,6 +124,12 @@ async def get_queue_requests(
     get_queue_requests_query: FromDishka[IGetQueueRequests],
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> list[Request]:
+    """
+    Получить записи в очереди.
+    \nВозможные ошибки:
+    \n`QueueNotFoundError` - очередь не найдена
+    \n`NoRightsError` - пользователь не является владельцем очереди
+    """
     return await get_queue_requests_query(
         GetQueueRequestsQueryDTO(queue_id=queue_id, requester_id=current_user_id)
     )
@@ -124,25 +143,16 @@ async def get_request(
 ) -> Request:
     """
     Получить запись по id.
+    \nВозможные ошибки:
+    \n`RequestNotFoundError` - запись не найдена
+    \n`NoRightsError` - не достаточно прав
     """
     return await get_request_query(
         GetRequestQueryDTO(request_id=request_id, requester_id=current_user_id)
     )
 
 
-@router.patch(
-    "/{request_id}/time",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Запись с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения записи",
-        },
-    },
-)
+@router.patch("/{request_id}/time", status_code=status.HTTP_200_OK)
 async def update_request_confirmation_time(
     request_id: UUID,
     request: UpdateRequestConfirmationDatetimeRequest,
@@ -150,7 +160,15 @@ async def update_request_confirmation_time(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Обновить / назначить конкретное время записи (дата + время + длительность).
+    Обновить / назначить конкретное время записи.
+    \nВозможные ошибки:
+    \n`RequestNotFoundError` - запись не найдена
+    \n`NoRightsError` - не достаточно прав
+    \n`RejectedRequestIsFrozen` - запись отклонена и не может быть изменена
+    \n`ArchivedRequestIsFrozen` - запись архивирована и не может быть изменена
+    \n`TimeMustBeInsideQueueReceptionTime` - время визита должно быть внутри времени приема очереди
+    \n`TimePeriodNotValid` - время визита не валидно
+    \n`CannotScheduleRequest` - нельзя запланировать визит из-за конфликтов
     """
     await update_time_uc(
         UpdateRequestConfirmationDatetime(
@@ -168,19 +186,7 @@ async def update_request_confirmation_time(
     return MessageResponse(message="Request time updated successfully")
 
 
-@router.patch(
-    "/{request_id}/priority",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Запись с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения записи",
-        },
-    },
-)
+@router.patch("/{request_id}/priority", status_code=status.HTTP_200_OK)
 async def update_request_priority(
     request_id: UUID,
     request: UpdateRequestPriorityRequest,
@@ -188,7 +194,12 @@ async def update_request_priority(
     current_user_id: UUID = Depends(get_current_user_id),
 ) -> MessageResponse:
     """
-    Обновить приоритет записи (низкий/средний/высокий).
+    Обновить приоритет записи.
+    \nВозможные ошибки:
+    \n`RequestNotFoundError` - запись не найдена
+    \n`NoRightsError` - не достаточно прав
+    \n`RejectedRequestIsFrozen` - запись отклонена и не может быть изменена
+    \n`ArchivedRequestIsFrozen` - запись архивирована и не может быть изменена
     """
     command = UpdateRequestPriority(
         requester=UserId(value=current_user_id),
@@ -200,19 +211,7 @@ async def update_request_priority(
     return MessageResponse(message="Request priority updated successfully")
 
 
-@router.patch(
-    "/{request_id}/reject",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Запись с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения записи",
-        },
-    },
-)
+@router.patch("/{request_id}/reject", status_code=status.HTTP_200_OK)
 async def reject_request(
     request_id: UUID,
     reject_uc: FromDishka[IRejectRequest],
@@ -220,6 +219,11 @@ async def reject_request(
 ) -> MessageResponse:
     """
     Отклонить запись.
+    \nВозможные ошибки:
+    \n`RequestNotFoundError` - запись не найдена
+    \n`NoRightsError` - не достаточно прав
+    \n`RejectedRequestIsFrozen` - запись отклонена и не может быть изменена
+    \n`ArchivedRequestIsFrozen` - запись архивирована и не может быть изменена
     """
     command = RejectRequest(
         requester=UserId(value=current_user_id),
@@ -230,20 +234,7 @@ async def reject_request(
     return MessageResponse(message="Request rejected successfully")
 
 
-@router.post(
-    "/{request_id}/comment",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "model": ErrorResponse,
-            "description": "Запись с таким ID не найдена",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorResponse,
-            "description": "Нет прав для изменения записи",
-        },
-    },
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/{request_id}/comment", status_code=status.HTTP_201_CREATED)
 async def add_comment(
     request_id: UUID,
     add_comment_uc: FromDishka[IAddComment],
@@ -252,6 +243,11 @@ async def add_comment(
 ) -> MessageResponse:
     """
     Добавить комментарии к записи.
+    \nВозможные ошибки:
+    \n`RequestNotFoundError` - запись не найдена
+    \n`NoRightsError` - не достаточно прав
+    \n`RejectedRequestIsFrozen` - запись отклонена и не может быть изменена
+    \n`ArchivedRequestIsFrozen` - запись архивирована и не может быть изменена
     """
     command = AddComment(
         requester=UserId(value=current_user_id),
