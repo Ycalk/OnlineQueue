@@ -135,8 +135,7 @@ class Queue(AggregateRoot):
             elif (
                 request.status == RequestStatus.ACCEPTED
                 and request.confirmed_time is not None
-                and request.confirmed_time.end_period.timestamp()
-                < current_time - self.cleanup_period.value_seconds
+                and request.confirmed_time.end_period.timestamp() < current_time - 3600
             ):
                 request.archive()
                 self._add_event(

@@ -72,6 +72,14 @@ class QueueRepository(IQueueRepository):
 
         return await self.find(QueueId(value=request_model.queue_id))
 
+    async def get_all(self) -> list[Queue]:
+        result = await self._session.execute(
+            select(QueueSchema).options(selectinload(QueueSchema.requests))
+        )
+        return [
+            self._queue_to_domain(queue_model) for queue_model in result.scalars().all()
+        ]
+
     async def commit(self) -> None:
         await self._session.commit()
 

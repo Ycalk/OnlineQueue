@@ -4,6 +4,7 @@ from .user_provider import UserProvider
 from .queue_provider import QueueProvider
 from .request_provider import RequestProvider
 from .event_handlers_provider import EventHandlersProvider
+from .task_provider import TaskProvider
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "QueueProvider",
     "RequestProvider",
     "EventHandlersProvider",
+    "TaskProvider",
 ]

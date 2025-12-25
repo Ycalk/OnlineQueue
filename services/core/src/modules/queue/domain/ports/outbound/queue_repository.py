@@ -54,4 +54,12 @@ class IQueueRepository(Protocol):
         """
         ...
 
+    async def get_all(self) -> list[Queue]:
+        """Получение всех очередей
+
+        Returns:
+            list[Queue]: список очередей
+        """
+        ...
+
     async def commit(self) -> None: ...

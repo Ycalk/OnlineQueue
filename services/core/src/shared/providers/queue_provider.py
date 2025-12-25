@@ -5,6 +5,7 @@ from modules.queue.domain.ports.outbound import IQueueRepository
 from modules.queue.application.ports.outbound.queue_reader import IQueueReader
 from modules.queue.adapters.outbound.persistence.queue_reader import QueueReader
 from modules.queue.adapters.outbound.persistence.queue_repository import QueueRepository
+from modules.queue.application.tasks import CleanupQueue as CleanupQueueTask
 from modules.queue.application.use_cases import (
     ActivateQueue,
     ChangeCleanupPeriod,
@@ -133,3 +134,9 @@ class QueueProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_get_owner_queues_query(self, reader: IQueueReader) -> IGetOwnerQueues:
         return GetOwnerQueues(reader)
+
+    @provide(scope=Scope.REQUEST)
+    def get_cleanup_queue_task(
+        self, queue_repository: IQueueRepository
+    ) -> CleanupQueueTask:
+        return CleanupQueueTask(queue_repository)
