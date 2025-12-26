@@ -7,10 +7,10 @@ import { Router } from './Router';
 import { theme } from './theme';
 
 export default function App() {
-  return (
-    <MantineProvider theme={theme}>
-      <Notifications />
-      <Router />
-    </MantineProvider>
-  );
+    return (
+        <MantineProvider forceColorScheme="light" theme={theme}>
+            <Notifications />
+            <Router />
+        </MantineProvider>
+    );
 }

@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import HomePage from './pages/Home.page';
+import HomePage from './pages/HomePage';
 import MyQueue from './pages/MyQueue';
 import MyApplication from './pages/MyApplication';
 import RegisterPage from './pages/RegisterPage';
@@ -10,44 +10,44 @@ import Notification from './pages/Notification';
 import ReturnToEnter from './pages/ReturnToEnter';
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <HomePage />,
-  },
-  {
-    path: '/my-queue',
-    element: <MyQueue />,
-  },
-  {
-    path: '/my-application',
-    element: <MyApplication />,
-  },
-  {
-    path: '/registration',
-    element: <RegisterPage />,
-  },
-  {
-    path: '/authorization',
-    element: <AuthPage />,
-  },
-  {
-    path: '/recovery-password',
-    element: <RecoveryPass />,
-  },
-  {
-    path: '/new-password',
-    element: <NewPass />,
-  },
-  {
-    path: '/notification',
-    element: <Notification />,
-  },
-  {
-    path: '/return',
-    element: <ReturnToEnter />,
-  },
+    {
+        path: '/',
+        element: <HomePage />,
+    },
+    {
+        path: '/my-queue',
+        element: <MyQueue />,
+    },
+    {
+        path: '/my-application',
+        element: <MyApplication />,
+    },
+    {
+        path: '/registration',
+        element: <RegisterPage />,
+    },
+    {
+        path: '/authorization',
+        element: <AuthPage />,
+    },
+    {
+        path: '/recovery-password',
+        element: <RecoveryPass />,
+    },
+    {
+        path: '/new-password',
+        element: <NewPass />,
+    },
+    {
+        path: '/notification',
+        element: <Notification />,
+    },
+    {
+        path: '/return',
+        element: <ReturnToEnter />,
+    },
 ]);
 
 export function Router() {
-  return <RouterProvider router={router} />;
+    return <RouterProvider router={router} />;
 }

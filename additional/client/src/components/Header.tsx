@@ -4,11 +4,11 @@ import {
     Container,
     Button,
     Group,
-    Title,
     Menu,
     ActionIcon,
     Text,
-    AppShell
+    AppShell,
+    Image
 } from '@mantine/core';
 
 import {
@@ -52,7 +52,15 @@ export function Header() {
         <AppShell.Header>
             <Container size="100%" h="100%">
                 <Group h="100%" px="md" justify="space-between">
-                    <Title order={2} c="#e91e63">К Телеком</Title>
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+                        <Image
+                            src="/logo.png"
+                            alt="К Телеком"
+                            h={30}
+                            w="auto"
+                            fit="contain"
+                        />
+                    </Link>
 
                     <Group>
                         {isLoading ? (
