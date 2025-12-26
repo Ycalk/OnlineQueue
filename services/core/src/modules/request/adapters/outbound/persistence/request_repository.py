@@ -88,7 +88,7 @@ class RequestRepository(IRequestRepository):
 
     async def save_queue(self, queue: Queue) -> None:
         queue_model = self._queue_to_orm(queue)
-        self._session.add(queue_model)
+        await self._session.merge(queue_model)
         await self._session.flush()
 
     async def commit(self) -> None:

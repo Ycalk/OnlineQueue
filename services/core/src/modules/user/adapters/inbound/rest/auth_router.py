@@ -33,9 +33,7 @@ def set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
 
 
 def clear_refresh_token_cookie(response: Response) -> None:
-    response.delete_cookie(
-        key=settings.refresh_token_cookie_name, path="/"
-    )
+    response.delete_cookie(key=settings.refresh_token_cookie_name, path="/")
 
 
 @router.post(

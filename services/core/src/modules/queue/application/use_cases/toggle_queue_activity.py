@@ -10,9 +10,11 @@ class ToggleQueueActivity(QueueOwnerUseCase, IToggleQueueActivity):
         self._logger.info(f"Toggle activity for queue with id {command.queue_id.value}")
         queue = await self._load_and_check_owner(command.queue_id, command.requester)
 
-        if queue.is_active:
+        if queue.is_active.value:
+            self._logger.info(f"Deactivating queue with id {command.queue_id.value}")
             queue.deactivate()
         else:
+            self._logger.info(f"Activating queue with id {command.queue_id.value}")
             queue.activate()
         await self._queue_repository.save(queue)
         await self._publish_events(queue)
