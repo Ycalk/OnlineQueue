@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Container,
@@ -8,38 +8,32 @@ import {
     Text,
     AppShell,
     Image,
-    UnstyledButton,
+    ActionIcon,
+    Avatar,
+    rem
 } from '@mantine/core';
 import {
     IconClipboardText,
     IconFriends,
     IconChecklist,
-    IconBellRinging,
-    IconTransitionLeft,
-    IconUserCircle,
-    IconChevronDown,
     IconSettings,
+    IconMenu2,
 } from '@tabler/icons-react';
-import { api, UserProfile } from '../api/ApiClient';
+import { useAuth } from '../context/AuthContext';
 
 import { LoginModal } from './LoginModal';
 import { RegisterModal } from './RegisterModal';
 
 export function Header() {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+    
+    const { user, isLoading, refreshUser, logout: contextLogout } = useAuth(); 
 
-    const [user, setUser] = useState<UserProfile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    // Состояния для модалок
     const [loginOpen, setLoginOpen] = useState(false);
     const [registerOpen, setRegisterOpen] = useState(false);
 
-    // --- ЛОГИКА URL PARAMETER (action) -> MODAL ---
     useEffect(() => {
         const action = searchParams.get('action');
-
         if (action === 'login') {
             setLoginOpen(true);
             setRegisterOpen(false);
@@ -52,73 +46,20 @@ export function Header() {
         }
     }, [searchParams]);
 
-    // --- УПРАВЛЕНИЕ URL ---
-
-    const openLogin = () => {
-        setSearchParams({ action: 'login' });
-    };
-
-    const openRegister = () => {
-        setSearchParams({ action: 'registration' });
-    };
-
+    const openLogin = () => setSearchParams({ action: 'login' });
+    const openRegister = () => setSearchParams({ action: 'registration' });
     const closeModals = () => {
-        // Удаляем параметр action, оставляя остальные параметры (если были)
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('action');
         setSearchParams(newParams);
     };
+    const switchToRegister = () => setSearchParams({ action: 'registration' });
 
-    const switchToRegister = () => {
-        setSearchParams({ action: 'registration' });
-    };
-
-    // --- ЗАГРУЗКА ДАННЫХ ---
-
-    const loadUser = async () => {
-        try {
-            if (!localStorage.getItem('access_token')) {
-                setUser(null);
-                return;
-            }
-            const userData = await api.getUser();
-            setUser(userData);
-        } catch (e) {
-            console.error(e);
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadUser();
-    }, []);
-
-    const handleLogout = async () => {
-        try {
-            await api.request('/api/v1/auth/logout', 'POST');
-        } catch (error) {
-            console.error("Logout error", error);
-        } finally {
-            api.clearToken();
-            setUser(null);
-            navigate('/');
-        }
-    };
 
     const getUserDisplayName = () => {
         if (!user) return '';
         const fullName = `${user.last_name} ${user.first_name}`.trim();
-        if (fullName) {
-            return (
-                <>
-                    <Text span fw={500}>{fullName}</Text>
-                    <Text span size="xs" c="dimmed" ml={4}>({user.email})</Text>
-                </>
-            );
-        }
-        return <Text span fw={500}>{user.email}</Text>;
+        return fullName || user.email;
     };
 
     return (
@@ -149,27 +90,36 @@ export function Header() {
                                     </Button>
                                 </>
                             ) : (
-                                <Menu shadow="md" width={260} position="bottom-end" trigger="click-hover" openDelay={100} closeDelay={200}>
+                                <Menu shadow="md" width={260} position="bottom-end">
                                     <Menu.Target>
-                                        <UnstyledButton
-                                            style={{
-                                                padding: '8px 12px',
-                                                borderRadius: '8px',
-                                                transition: 'background-color 0.2s ease',
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                        >
-                                            <Group gap="xs">
-                                                <div style={{ lineHeight: 1, textAlign: 'right' }}>
-                                                    {getUserDisplayName()}
-                                                </div>
-                                                <IconChevronDown size={16} color="gray" />
-                                            </Group>
-                                        </UnstyledButton>
+                                        <ActionIcon variant="transparent" size="lg" color="gray">
+                                            <IconMenu2 style={{ width: rem(28), height: rem(28) }} />
+                                        </ActionIcon>
                                     </Menu.Target>
 
                                     <Menu.Dropdown style={{ zIndex: 1001 }}>
+                                        <Menu.Item
+                                            component={Link}
+                                            to="/profile"
+                                            style={{ textDecoration: 'none' }}
+                                        >
+                                            <Group gap="xs">
+                                                <Avatar radius="xl" size="md">
+                                                    {user.first_name?.[0]?.toUpperCase()}
+                                                </Avatar>
+                                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                    <Text size="sm" fw={500} truncate>
+                                                        {getUserDisplayName()}
+                                                    </Text>
+                                                    <Text size="xs" c="dimmed" truncate>
+                                                        {user.email}
+                                                    </Text>
+                                                </div>
+                                            </Group>
+                                        </Menu.Item>
+
+                                        <Menu.Divider />
+
                                         <Menu.Label>Очередь</Menu.Label>
                                         <Menu.Item component={Link} to="/" leftSection={<IconClipboardText size={16} />}>
                                             Доступные очереди
@@ -184,20 +134,6 @@ export function Header() {
                                             Мои заявки
                                         </Menu.Item>
 
-                                        <Menu.Divider />
-                                        <Menu.Label>Аккаунт</Menu.Label>
-
-                                        <Menu.Item component={Link} to="/profile" leftSection={<IconUserCircle size={16} />}>
-                                            Мой профиль
-                                        </Menu.Item>
-
-                                        <Menu.Item
-                                            color="red"
-                                            leftSection={<IconTransitionLeft size={16} />}
-                                            onClick={handleLogout}
-                                        >
-                                            Выход
-                                        </Menu.Item>
                                     </Menu.Dropdown>
                                 </Menu>
                             )}
@@ -206,23 +142,17 @@ export function Header() {
                 </Container>
             </AppShell.Header>
 
-            <LoginModal
-                opened={loginOpen}
-                onClose={closeModals}
+            <LoginModal 
+                opened={loginOpen} 
+                onClose={closeModals} 
                 onSwitchToRegister={switchToRegister}
-                onLoginSuccess={() => {
-                    loadUser();
-                    closeModals();
-                }}
+                onLoginSuccess={() => { refreshUser(); closeModals(); }}
             />
-
-            <RegisterModal
-                opened={registerOpen}
+            
+            <RegisterModal 
+                opened={registerOpen} 
                 onClose={closeModals}
-                onRegisterSuccess={() => {
-                    loadUser();
-                    closeModals();
-                }}
+                onRegisterSuccess={() => { refreshUser(); closeModals(); }}
             />
         </>
     );

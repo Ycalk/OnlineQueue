@@ -4,6 +4,7 @@ import MyQueue from './pages/MyQueue';
 import MyApplication from './pages/MyApplication';
 import RecoveryPass from './pages/RecoveryPassword';
 import NewPass from './pages/NewPassword';
+import ProfilePage from './pages/ProfilePage';
 
 const router = createBrowserRouter([
     {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
     {
         path: '/application/my',
         element: <MyApplication />,
+    },
+    {
+        path: '/profile',
+        element: <ProfilePage />,
     },
     {
         path: '/password/recovery',

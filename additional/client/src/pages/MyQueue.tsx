@@ -201,7 +201,6 @@ export const MyQueue: React.FC = () => {
             header={{ height: 70 }}
             padding="md"
         >
-            {/* Используем универсальный Header */}
             <Header />
 
             <AppShell.Main>

@@ -12,7 +12,7 @@ export interface UserProfile {
     email: string;
     first_name: string;
     last_name: string;
-    patronymic: string;
+    patronymic: string | null;
 }
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
