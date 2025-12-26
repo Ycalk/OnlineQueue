@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     Container,
     Title,
@@ -24,16 +24,14 @@ import {
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import {
-    IconEdit,
-    IconCheck,
     IconX,
-    IconTrash,
     IconList,
     IconActivity,
     IconClock,
     IconChevronDown,
     IconChevronUp
 } from '@tabler/icons-react';
+import { useMediaQuery } from '@mantine/hooks';
 import { api } from '../api/ApiClient';
 import { Header } from '../components/Header';
 
@@ -50,6 +48,17 @@ interface Queue {
 export default function QueueSettingsPage() {
     const [queues, setQueues] = useState<Queue[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const isMobile = useMediaQuery('(max-width: 48em)');
+    const columnsCount = isMobile ? 1 : 2;
+
+    const columns = useMemo(() => {
+        const cols: Queue[][] = Array.from({ length: columnsCount }, () => []);
+        queues.forEach((queue, index) => {
+            cols[index % columnsCount].push(queue);
+        });
+        return cols;
+    }, [queues, columnsCount]);
 
     const fetchQueues = async () => {
         try {
@@ -95,15 +104,19 @@ export default function QueueSettingsPage() {
 
                     <Divider size={2} my="sm" />
 
-                    {queues.length === 0 ? (
-                        <Text c="dimmed" ta="center">У вас пока нет созданных очередей.</Text>
-                    ) : (
-                        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-                            {queues.map((queue) => (
-                                <QueueEditCard key={queue.id} queue={queue} onUpdate={fetchQueues} />
-                            ))}
-                        </SimpleGrid>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        {columns.map((colItems, colIndex) => (
+                            <Stack key={colIndex} gap="lg" style={{ flex: 1 }}>
+                                {colItems.map(queue => (
+                                    <QueueEditCard
+                                        key={queue.id}
+                                        queue={queue}
+                                        onUpdate={fetchQueues}
+                                    />
+                                ))}
+                            </Stack>
+                        ))}
+                    </div>
                 </Container>
             </AppShell.Main>
         </AppShell>
@@ -231,14 +244,14 @@ function QueueEditCard({ queue, onUpdate }: { queue: Queue, onUpdate: () => void
                                 style={{ gridColumn: 'span 1 / span 2' }}
                                 {...form.getInputProps('description')}
                             />
-                            
+
                             <NumberInput
                                 label="Период автоочистки (дней)"
                                 min={0}
                                 {...form.getInputProps('cleanup_period_days')}
                             />
                             <Text size="xs" c="dimmed" mt={-5}>Через указанное количество дней запрос попадет в архив.</Text>
-                            
+
                         </Stack>
 
                         <Group justify="space-between" mt="xl">
