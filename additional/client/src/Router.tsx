@@ -2,12 +2,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import MyQueue from './pages/MyQueue';
 import MyApplication from './pages/MyApplication';
-import RegisterPage from './pages/RegisterPage';
-import AuthPage from './pages/AuthPage';
 import RecoveryPass from './pages/RecoveryPassword';
 import NewPass from './pages/NewPassword';
-import Notification from './pages/Notification';
-import ReturnToEnter from './pages/ReturnToEnter';
 
 const router = createBrowserRouter([
     {
@@ -15,36 +11,20 @@ const router = createBrowserRouter([
         element: <HomePage />,
     },
     {
-        path: '/my-queue',
+        path: '/queue/my',
         element: <MyQueue />,
     },
     {
-        path: '/my-application',
+        path: '/application/my',
         element: <MyApplication />,
     },
     {
-        path: '/registration',
-        element: <RegisterPage />,
-    },
-    {
-        path: '/authorization',
-        element: <AuthPage />,
-    },
-    {
-        path: '/recovery-password',
+        path: '/password/recovery',
         element: <RecoveryPass />,
     },
     {
-        path: '/new-password',
+        path: '/password/new',
         element: <NewPass />,
-    },
-    {
-        path: '/notification',
-        element: <Notification />,
-    },
-    {
-        path: '/return',
-        element: <ReturnToEnter />,
     },
 ]);
 

@@ -98,13 +98,12 @@ function HomePage() {
 
     const handleCreateQueue = () => {
         if (!localStorage.getItem('access_token')) {
-            navigate('/authorization');
+            navigate('/?action=login');
             return;
         }
         setShowCreateQueue(true);
     };
 
-    // ФУНКЦИЯ СОЗДАНИЯ ОЧЕРЕДИ
     const handleQueueSubmit = async (data: CreateQueuePayload) => {
         try {
             setIsCreating(true);

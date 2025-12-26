@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
-import { Paper, Group, Title, ActionIcon, Stack, TextInput, Textarea, SimpleGrid, NumberInput, Button, Box } from '@mantine/core';
+import { Drawer, Stack, TextInput, Textarea, SimpleGrid, NumberInput, Button, ActionIcon, Text } from '@mantine/core'; // Используем Drawer
 import { TimeInput } from '@mantine/dates';
 import { IconClock } from '@tabler/icons-react';
-
 
 export interface CreateQueuePayload {
     name: string;
@@ -43,40 +42,71 @@ export function CreateQueueModal({ opened, onClose, onSubmit, isLoading = false 
             reception_time_start: startTime,
             reception_time_end: endTime,
         };
-
         onSubmit(payload);
     };
 
-    if (!opened) return null;
-
     return (
-        <>
-            <Box onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
-            <Paper shadow="xl" p="xl" style={{ position: 'fixed', top: 0, right: 0, width: 400, height: '100%', zIndex: 201 }}>
-                <Group justify="space-between" mb="lg">
-                    <Title order={3}>Создать очередь</Title>
-                    <ActionIcon variant="transparent" onClick={onClose}>✕</ActionIcon>
-                </Group>
-                <Stack gap="md">
-                    <TextInput label="Название" required value={name} onChange={(e) => setName(e.currentTarget.value)} />
-                    <Textarea label="Описание" minRows={3} value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
-                    <SimpleGrid cols={2}>
-                        <TimeInput label="Начало приёма" ref={startRef} rightSection={pickerControl(startRef)} value={startTime} onChange={(e) => setStartTime(e.currentTarget.value)} required />
-                        <TimeInput label="Конец приёма" ref={endRef} rightSection={pickerControl(endRef)} value={endTime} onChange={(e) => setEndTime(e.currentTarget.value)} required />
-                    </SimpleGrid>
-                    <NumberInput label="Период автоочистки (дней)" required min={1} value={autocloseDays} onChange={setAutocloseDays} />
-
-                    <Button
-                        onClick={handleCreate}
-                        fullWidth
-                        mt="md"
-                        loading={isLoading}
-                        disabled={!name || !startTime || !endTime}
-                    >
-                        Создать
-                    </Button>
-                </Stack>
-            </Paper>
-        </>
+        <Drawer
+            opened={opened}
+            onClose={onClose}
+            title="Создать очередь"
+            position="right"
+            padding="xl"
+            size={400}
+            overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+            transitionProps={{ duration: 200, timingFunction: 'ease' }}
+        >
+            <Stack gap="md">
+                <TextInput 
+                    label="Название"
+                    placeholder="Введите название очереди"
+                    required 
+                    value={name} 
+                    onChange={(e) => setName(e.currentTarget.value)} 
+                />
+                <Textarea 
+                    label="Описание"
+                    placeholder="Введите описание очереди"
+                    minRows={3} 
+                    value={description} 
+                    onChange={(e) => setDescription(e.currentTarget.value)} 
+                />
+                <SimpleGrid cols={2}>
+                    <TimeInput 
+                        label="Начало приёма" 
+                        ref={startRef} 
+                        rightSection={pickerControl(startRef)} 
+                        value={startTime} 
+                        onChange={(e) => setStartTime(e.currentTarget.value)} 
+                        required 
+                    />
+                    <TimeInput 
+                        label="Окончание приема" 
+                        ref={endRef} 
+                        rightSection={pickerControl(endRef)} 
+                        value={endTime} 
+                        onChange={(e) => setEndTime(e.currentTarget.value)} 
+                        required 
+                    />
+                </SimpleGrid>
+                <NumberInput 
+                    label="Период автоочистки (дней)" 
+                    required 
+                    min={1} 
+                    value={autocloseDays} 
+                    onChange={setAutocloseDays} 
+                />
+                <Text size="xs" c="dimmed" mt={-5}>Через указанное количество дней запрос попадет в архив.</Text>
+                <Button 
+                    onClick={handleCreate} 
+                    fullWidth 
+                    mt="md" 
+                    loading={isLoading}
+                    disabled={!name || !startTime || !endTime}
+                >
+                    Создать
+                </Button>
+            </Stack>
+        </Drawer>
     );
 }
