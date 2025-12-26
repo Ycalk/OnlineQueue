@@ -28,13 +28,13 @@ def set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
         httponly=True,
         secure=not settings.debug,  # HTTPS only в production
         samesite="lax",
-        path=f"{settings.api_prefix}/auth/token",
+        path="/",
     )
 
 
 def clear_refresh_token_cookie(response: Response) -> None:
     response.delete_cookie(
-        key=settings.refresh_token_cookie_name, path=f"{settings.api_prefix}/auth/token"
+        key=settings.refresh_token_cookie_name, path="/"
     )
 
 

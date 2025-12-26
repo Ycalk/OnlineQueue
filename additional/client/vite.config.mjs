@@ -3,10 +3,19 @@ import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './vitest.setup.mjs',
-  },
+    plugins: [react(), tsconfigPaths()],
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './vitest.setup.mjs',
+    },
+    server: {
+        proxy: {
+            '/api': {
+                target: 'https://online-queue.ycalk.tech',
+                changeOrigin: true,
+                secure: false,
+            }
+        }
+    }
 });

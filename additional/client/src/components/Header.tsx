@@ -8,7 +8,6 @@ import {
     Menu,
     ActionIcon,
     Text,
-    Loader,
     AppShell
 } from '@mantine/core';
 
@@ -20,49 +19,21 @@ import {
     IconTransitionLeft,
     IconMenu2,
 } from '@tabler/icons-react';
-import { api } from '../api/ApiClient';
-
-
-export interface UserProfile {
-    email: string;
-    first_name: string;
-    last_name: string;
-    patronymic: string;
-}
+import { api, UserProfile } from '../api/ApiClient';
 
 export function Header() {
     const navigate = useNavigate();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchUser = async () => {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-            setUser(null);
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            const userData = await api.request<UserProfile>('/api/v1/users/me');
-            setUser(userData);
-        } catch (error) {
-            console.error("Failed to fetch user profile", error);
-            api.clearToken();
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchUser();
+        const initUser = async () => {
+            const userData = await api.getUser();
+            setUser(userData);
+            setIsLoading(false);
+        };
 
-        const unsubscribe = api.onAuthChange(() => {
-            fetchUser();
-        });
-
-        return () => unsubscribe();
+        initUser();
     }, []);
 
     const handleLogout = async () => {
@@ -72,6 +43,7 @@ export function Header() {
             console.error("Logout error", error);
         } finally {
             api.clearToken();
+            setUser(null);
             navigate('/authorization');
         }
     };
