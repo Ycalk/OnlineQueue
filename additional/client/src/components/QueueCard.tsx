@@ -149,12 +149,6 @@ export function QueueCard({ queue, isOpen, onToggle }: QueueCardProps) {
                             {queue.reception_time_start.slice(0, 5)} - {queue.reception_time_end.slice(0, 5)}
                         </Text>
                     </Group>
-                    {queue.requests_avg_duration_seconds !== null && (
-                        <Group justify="space-between">
-                            <Text size="sm" c="dimmed">Ср. время:</Text>
-                            <Text size="sm" fw={500}>{Math.round(queue.requests_avg_duration_seconds / 60)} мин</Text>
-                        </Group>
-                    )}
                 </Stack>
 
                 <Button fullWidth variant={isOpen ? 'light' : 'outline'} onClick={onToggle} rightSection={isOpen ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}>
@@ -192,7 +186,7 @@ export function QueueCard({ queue, isOpen, onToggle }: QueueCardProps) {
                                         onClick={handleSubmit}
                                         loading={isSubmitting}
                                     >
-                                        Отправить заявку
+                                        Записаться
                                     </Button>
                                 </Stack>
                             </div>

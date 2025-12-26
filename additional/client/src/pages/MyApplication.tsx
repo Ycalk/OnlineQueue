@@ -24,7 +24,7 @@ import {
     IconDownload,
 } from '@tabler/icons-react';
 
-// Импортируем наш универсальный компонент заголовка
+
 import { Header } from '../components/Header';
 
 interface HistoryEvent {
@@ -188,7 +188,6 @@ function MyApplication() {
 
     return (
         <AppShell header={{ height: 70 }} padding="md">
-            {/* Используем универсальный Header */}
             <Header />
 
             <AppShell.Main>

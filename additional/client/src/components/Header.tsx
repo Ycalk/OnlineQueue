@@ -16,7 +16,7 @@ import {
     IconClipboardText,
     IconFriends,
     IconChecklist,
-    IconSettings,
+    IconAdjustmentsAlt,
     IconMenu2,
 } from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
@@ -127,8 +127,8 @@ export function Header() {
                                         <Menu.Item component={Link} to="/queue/my" leftSection={<IconFriends size={16} />}>
                                             Мои очереди
                                         </Menu.Item>
-                                        <Menu.Item component={Link} to="/queue/my/settings" leftSection={<IconSettings size={16} />}>
-                                            Настройка очередей
+                                        <Menu.Item component={Link} to="/queue/my/settings" leftSection={<IconAdjustmentsAlt size={16} />}>
+                                            Управление очередями
                                         </Menu.Item>
                                         <Menu.Item component={Link} to="/application/my" leftSection={<IconChecklist size={16} />}>
                                             Мои заявки

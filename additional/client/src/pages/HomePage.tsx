@@ -82,10 +82,16 @@ function HomePage() {
 
     const filteredQueues = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return queues;
-        return queues.filter((x) =>
-            `${x.name} ${x.ownerName} ${x.description ?? ''}`.toLowerCase().includes(q)
-        );
+        let result = queues;
+
+        if (q) {
+            result = queues.filter((x) =>
+                `${x.name} ${x.ownerName} ${x.description ?? ''}`.toLowerCase().includes(q)
+            );
+        }
+        const activeQueues = result.filter(queue => queue.is_active);
+        const inactiveQueues = result.filter(queue => !queue.is_active);
+        return [...activeQueues, ...inactiveQueues];
     }, [queues, search]);
 
     const columns = useMemo(() => {

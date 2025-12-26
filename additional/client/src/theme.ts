@@ -1,7 +1,5 @@
 import { createTheme, MantineColorsTuple } from '@mantine/core';
 
-// Палитра должна идти от самого светлого к самому темному
-// Сгенерировано на основе вашего цвета #C8235A
 const myCustomPink: MantineColorsTuple = [
     '#ffeef6',
     '#ffdeeb',
