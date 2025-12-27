@@ -49,8 +49,8 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
             setComment('');
             notifications.show({ title: 'Успех', message: 'Комментарий добавлен', color: 'green' });
             onUpdate();
-        } catch (e) {
-            notifications.show({ title: 'Ошибка', message: 'Не удалось отправить комментарий', color: 'red' });
+        } catch (e: any) {
+            notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось отправить комментарий', color: 'red' });
         } finally {
             setIsSubmitting(false);
         }
@@ -62,8 +62,8 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
             await api.request(`/api/v1/requests/${request.id}/reject`, 'PATCH');
             notifications.show({ title: 'Успех', message: 'Заявка отменена', color: 'green' });
             onUpdate();
-        } catch (e) {
-            notifications.show({ title: 'Ошибка', message: 'Не удалось отменить заявку', color: 'red' });
+        } catch (e: any) {
+            notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось отменить заявку', color: 'red' });
         } finally {
             setIsSubmitting(false);
         }
@@ -89,7 +89,7 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
         : 'Загрузка...';
 
     return (
-        <Card shadow="sm" padding="lg" radius="md" withBorder h={600} style={{ display: 'flex', flexDirection: 'column' }}> {/* Чуть увеличил высоту */}
+        <Card shadow="sm" padding="lg" radius="md" withBorder h={500} style={{ display: 'flex', flexDirection: 'column' }}> {/* Чуть увеличил высоту */}
 
             <Group justify="space-between" mb="xs">
                 <Group gap="xs">
@@ -136,6 +136,9 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
                 <Box pr="xs" pb="xs">
                     {activeTab === 'info' && (
                         <Stack gap="md">
+                            {request.status === 'accepted' && request.confirmed_datetime && (
+                                <Badge variant="outline" color="custom-pink" size="lg">Назначенное время: {request.confirmed_datetime.date} {request.confirmed_datetime.time_start} - {request.confirmed_datetime.time_end}</Badge>
+                            )}
                             {request.queueData?.description && (
                                 <div>
                                     <Text size="sm" fw={700}>Описание очереди:</Text>
@@ -159,21 +162,6 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
                                     </Text>
                                 </Text>
                             </div>
-
-                            {request.status === 'accepted' && request.confirmed_datetime && (
-                                <div style={{
-                                    backgroundColor: 'var(--mantine-color-green-0)',
-                                    padding: '8px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--mantine-color-green-2)'
-                                }}>
-                                    <Text size="sm" fw={700} c="green.8">Подтвержденное время:</Text>
-                                    <Text size="sm" fw={600} c="green.9">
-                                        {request.confirmed_datetime.date} <br />
-                                        {request.confirmed_datetime.time_start} - {request.confirmed_datetime.time_end}
-                                    </Text>
-                                </div>
-                            )}
                         </Stack>
                     )}
 
@@ -182,25 +170,28 @@ export function ApplicationCard({ request, onUpdate }: ApplicationCardProps) {
                             <RequestHistory request={request} />
 
                             {!request.is_archived && (
-                                <Stack gap="xs">
-                                    <Text size="sm" fw={500}>Новый комментарий</Text>
-                                    <Textarea
-                                        placeholder="Напишите что-нибудь..."
-                                        value={comment}
-                                        onChange={(e) => setComment(e.currentTarget.value)}
-                                        minRows={2}
-                                        autosize
-                                    />
-                                    <Button
-                                        size="xs"
-                                        variant="light"
-                                        onClick={handleSendComment}
-                                        loading={isSubmitting}
-                                        disabled={!comment.trim()}
-                                    >
-                                        Отправить
-                                    </Button>
-                                </Stack>
+                                <>
+
+                                    <Stack gap="xs">
+                                        <Divider label="Новое сообщение" labelPosition="center" />
+                                        <Textarea
+                                            placeholder="Напишите комментарий"
+                                            value={comment}
+                                            onChange={(e) => setComment(e.currentTarget.value)}
+                                            minRows={2}
+                                            autosize
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant="light"
+                                            onClick={handleSendComment}
+                                            loading={isSubmitting}
+                                            disabled={!comment.trim()}
+                                        >
+                                            Отправить
+                                        </Button>
+                                    </Stack>
+                                </>
                             )}
 
                         </Stack>

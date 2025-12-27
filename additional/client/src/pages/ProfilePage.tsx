@@ -39,7 +39,7 @@ export default function ProfilePage() {
         initialValues: { current_password: '', new_password: '', confirm_new_password: '' },
         validate: {
             current_password: (val) => (val.length < 1 ? 'Введите текущий пароль' : null),
-            new_password: (val) => (val.length < 6 ? 'Пароль должен быть длиннее 6 символов' : null),
+            new_password: (val) => (val.length < 8 ? 'Пароль должен быть длиннее 8 символов' : null),
             confirm_new_password: (val, values) => (val !== values.new_password ? 'Пароли не совпадают' : null),
         },
         validateInputOnChange: true,
@@ -286,7 +286,7 @@ export default function ProfilePage() {
 
                             <Paper withBorder p="md" radius="md">
                                 <Group justify="space-between" mb="md">
-                                    <Title order={4} c="red">Зона риска</Title>
+                                    <Title order={4} c="red">Выход</Title>
                                     <IconLogout size={24} color="var(--mantine-color-red-6)" />
                                 </Group>
                                 <Text size="sm" c="dimmed" mb="md">

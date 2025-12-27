@@ -18,7 +18,9 @@ import {
     Collapse,
     Divider,
     Box,
-    AppShell
+    AppShell,
+    Center,
+    Skeleton
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
@@ -29,7 +31,6 @@ import {
     IconChevronUp,
     IconSearch,
     IconPlus,
-    IconCheck
 } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { api } from '../api/ApiClient';
@@ -68,9 +69,9 @@ export default function QueueSettingsPage() {
         try {
             const data = await api.request<Queue[]>('/api/v1/queues/my', 'GET');
             setQueues(data);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            notifications.show({ title: 'Ошибка', message: 'Не удалось загрузить очереди', color: 'red' });
+            notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось загрузить очереди', color: 'red' });
         } finally {
             setIsLoading(false);
         }
@@ -117,7 +118,6 @@ export default function QueueSettingsPage() {
                 title: 'Успех',
                 message: 'Очередь успешно создана',
                 color: 'green',
-                icon: <IconCheck size={18} />,
             });
 
             setShowCreateQueue(false);
@@ -128,7 +128,6 @@ export default function QueueSettingsPage() {
                 title: 'Ошибка',
                 message: error.message || 'Не удалось создать очередь',
                 color: 'red',
-                icon: <IconX size={18} />,
             });
         } finally {
             setIsCreating(false);
@@ -144,11 +143,19 @@ export default function QueueSettingsPage() {
                 <Container size="80%" py="md">
                     <Title order={1} mb="lg">Управление очередями</Title>
 
-                    <Group mb="xs" style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
-                        <Text size="sm">Всего очередей: <strong>{totalQueues}</strong></Text>
-                        <Text size="sm">Активные очереди: <strong>{activeQueuesCount}</strong></Text>
-                        <Text size="sm">Всего заявок: <strong>{totalRequests}</strong></Text>
-                    </Group>
+                    {isLoading ? (
+                        <Group mb="xs">
+                            <Skeleton height={20} width={150} radius="sm" />
+                            <Skeleton height={20} width={150} radius="sm" />
+                            <Skeleton height={20} width={150} radius="sm" />
+                        </Group>
+                    ) : (
+                        <Group mb="xs">
+                            <Text size="sm">Всего очередей: <strong>{totalQueues}</strong></Text>
+                            <Text size="sm">Активные очереди: <strong>{activeQueuesCount}</strong></Text>
+                            <Text size="sm">Всего заявок: <strong>{totalRequests}</strong></Text>
+                        </Group>
+                    )}
 
 
 
@@ -169,9 +176,26 @@ export default function QueueSettingsPage() {
 
                     <Divider size={2} my="sm" />
                     {isLoading ? (
-                        <Container size="lg" py="xl">
-                            <Group justify="center"><Loader /></Group>
-                        </Container>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                            {Array.from({ length: columnsCount }).map((_, colIndex) => (
+                                <Stack key={colIndex} gap="lg" style={{ flex: 1 }}>
+                                    {Array.from({ length: 3 }).map((_, cardIndex) => (
+                                        <Paper key={cardIndex} withBorder radius="md" shadow="sm" p="md">
+                                            <Group justify="space-between">
+                                                <Group>
+                                                    <Skeleton height={32} width={32} radius="sm" /> 
+                                                    <Skeleton height={20} width={150} radius="sm" />
+                                                </Group>
+                                                <Group>
+                                                    <Skeleton height={20} width={80} radius="xl" />
+                                                    <Skeleton height={28} width={28} radius="sm" />
+                                                </Group>
+                                            </Group>
+                                        </Paper>
+                                    ))}
+                                </Stack>
+                            ))}
+                        </div>
                     ) : (
                         filteredQueues.length === 0 ? (
                             <Text c="dimmed" ta="center" mt="xl">

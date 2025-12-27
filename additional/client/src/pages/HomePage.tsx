@@ -7,7 +7,7 @@ import 'dayjs/locale/ru';
 import '@mantine/dates/styles.css';
 import { notifications } from '@mantine/notifications';
 
-import { AppShell, Container, TextInput, Button, Group, Title, Divider, Stack, Loader, Center, Text } from '@mantine/core';
+import { AppShell, Container, TextInput, Button, Group, Title, Divider, Stack, Loader, Center, Text, Skeleton } from '@mantine/core';
 import { IconSearch, IconPlus, IconCheck, IconX } from '@tabler/icons-react';
 
 import { Header } from '../components/Header';
@@ -132,7 +132,6 @@ function HomePage() {
                 title: 'Ошибка',
                 message: error.message || 'Не удалось создать очередь',
                 color: 'red',
-                icon: <IconX size={18} />,
             });
         } finally {
             setIsCreating(false);
@@ -160,7 +159,44 @@ function HomePage() {
                     <Divider size={2} my="sm" />
 
                     {isLoading ? (
-                        <Center h={200}><Loader size="lg" /></Center>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                            {Array.from({ length: columnsCount }).map((_, colIndex) => (
+                                <Stack key={colIndex} gap="md" style={{ flex: 1 }}>
+                                    {Array.from({ length: 3 }).map((__, itemIndex) => (
+                                        <div
+                                            key={itemIndex}
+                                            style={{
+                                                border: '1px solid #dee2e6',
+                                                borderRadius: '8px',
+                                                padding: '16px',
+                                                backgroundColor: 'white'
+                                            }}
+                                        >
+                                            <Group justify="space-between" mb="xs">
+                                                <Group>
+                                                    <Skeleton height={38} width={38} radius="md" />
+                                                    <Skeleton height={20} width={140} radius="xl" />
+                                                </Group>
+                                                <Skeleton height={20} width={60} radius="xl" />
+                                            </Group>
+
+                                            <Group mt="md" mb="xs">
+                                                <Skeleton height={16} width={16} radius="xl" />
+                                                <Skeleton height={12} width={100} radius="xl" />
+                                            </Group>
+
+                                            <Stack gap={6} mt="md">
+                                                <Skeleton height={8} radius="xl" />
+                                                <Skeleton height={8} radius="xl" />
+                                                <Skeleton height={8} width="70%" radius="xl" />
+                                            </Stack>
+
+                                            <Skeleton height={36} radius="md" mt="lg" />
+                                        </div>
+                                    ))}
+                                </Stack>
+                            ))}
+                        </div>
                     ) : error ? (
                         <Text c="red" ta="center">{error}</Text>
                     ) : (

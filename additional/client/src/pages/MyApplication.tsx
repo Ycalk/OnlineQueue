@@ -9,8 +9,10 @@ import {
     SegmentedControl,
     Divider,
     Text,
-    Loader,
-    Center
+    Paper,
+    Stack,
+    Skeleton,
+    Box
 } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -67,9 +69,9 @@ export default function MyApplication() {
             });
             await Promise.all(userPromises);
             setUsersMap(prev => ({ ...prev, ...loadedUsers }));
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            notifications.show({ title: 'Ошибка', message: 'Не удалось загрузить заявки', color: 'red' });
+            notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось загрузить заявки', color: 'red' });
         } finally {
             setIsLoading(false);
         }
@@ -138,10 +140,18 @@ export default function MyApplication() {
                 <Container size="80%" py="md">
                     <Title order={1} mb="lg">Мои заявки</Title>
 
-                    <Group mb="xs" style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
-                        <Text size="sm">Всего заявок: <strong>{stats.total}</strong></Text>
-                        <Text size="sm">Активных заявок: <strong>{stats.active}</strong></Text>
-                    </Group>
+                    {isLoading ? (
+                        <Group mb="xs">
+                            <Skeleton height={20} width={120} radius="sm" />
+                            <Skeleton height={20} width={120} radius="sm" />
+                        </Group>
+                    ) : (
+                        <Group mb="xs">
+                            <Text size="sm">Всего заявок: <strong>{stats.total}</strong></Text>
+                            <Text size="sm">Активных заявок: <strong>{stats.active}</strong></Text>
+                        </Group>
+                    )}
+
 
                     <Group mb="lg" justify="space-between">
                         <TextInput
@@ -166,7 +176,54 @@ export default function MyApplication() {
                     <Divider size={2} my="sm" />
 
                     {isLoading ? (
-                        <Center h={200}><Loader /></Center>
+                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <Paper
+                                    key={index}
+                                    withBorder
+                                    p="lg"
+                                    radius="md"
+                                    shadow="sm"
+                                    h={500}
+                                    style={{ display: 'flex', flexDirection: 'column' }}
+                                >
+                                    <Group justify="space-between" mb="xs">
+                                        <Skeleton height={28} width="70%" radius="sm" />
+                                    </Group>
+
+                                    <Group gap="xs" mb="sm">
+                                        <Skeleton height={20} width={20} radius="xl" />
+                                        <Skeleton height={16} width="40%" radius="sm" />
+                                    </Group>
+
+                                    <Group justify="space-between" mb="sm">
+                                        <Skeleton height={20} width={80} radius="xl" />
+                                        <Skeleton height={24} width={120} radius="sm" />
+                                    </Group>
+
+                                    <Divider mb="sm" />
+
+                                    <Box style={{ flex: 1 }}>
+                                        <Stack gap="md">
+                                            <Skeleton height={20} width="30%" radius="sm" />
+                                            <Skeleton height={60} radius="sm" />
+
+                                            <Skeleton height={20} width="25%" radius="sm" />
+                                            <Skeleton height={20} width="80%" radius="sm" />
+
+                                            <Skeleton height={20} width="35%" radius="sm" />
+                                            <Skeleton height={40} radius="sm" />
+                                        </Stack>
+                                    </Box>
+
+                                    <Divider my="sm" />
+
+                                    <Group justify="end">
+                                        <Skeleton height={30} width={100} radius="sm" />
+                                    </Group>
+                                </Paper>
+                            ))}
+                        </SimpleGrid>
                     ) : filteredRequests.length === 0 ? (
                         <Text c="dimmed" ta="center" mt="xl">Заявок не найдено</Text>
                     ) : (

@@ -113,7 +113,6 @@ export function QueueCard({ queue, isOpen, onToggle }: QueueCardProps) {
                 title: 'Ошибка',
                 message: error.message || 'Не удалось отправить заявку',
                 color: 'red',
-                icon: <IconX size={18} />,
             });
         } finally {
             setIsSubmitting(false);
