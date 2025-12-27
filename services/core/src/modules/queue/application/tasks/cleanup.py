@@ -2,13 +2,17 @@ from datetime import timedelta
 from typing import ClassVar
 
 from modules.queue.domain.ports.outbound import IQueueRepository
+from shared.building_blocks.event import IEventPublisher
 from shared.building_blocks.task import Task
 
 
 class CleanupQueue(Task):
     interval: ClassVar[timedelta] = timedelta(minutes=1)
 
-    def __init__(self, queue_repository: IQueueRepository):
+    def __init__(
+        self, event_publisher: IEventPublisher, queue_repository: IQueueRepository
+    ):
+        super().__init__(event_publisher)
         self._queue_repository = queue_repository
 
     async def __call__(self):
@@ -16,5 +20,6 @@ class CleanupQueue(Task):
         for queue in queues:
             queue.cleanup()
             await self._queue_repository.save(queue)
+            await self._publish_events(queue)
 
         await self._queue_repository.commit()

@@ -137,6 +137,8 @@ class QueueProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def get_cleanup_queue_task(
-        self, queue_repository: IQueueRepository
+        self,
+        queue_repository: IQueueRepository,
+        event_publisher: IEventPublisher,
     ) -> CleanupQueueTask:
-        return CleanupQueueTask(queue_repository)
+        return CleanupQueueTask(event_publisher, queue_repository)
