@@ -1,190 +1,134 @@
-import { useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
     AppShell,
     Container,
     TextInput,
-    Button,
-    Card,
-    Text,
-    Badge,
     Group,
     Title,
-    Stack,
-    Timeline,
-    Textarea,
     SimpleGrid,
     SegmentedControl,
-    ScrollArea,
-    Box,
     Divider,
+    Text,
+    Loader,
+    Center
 } from '@mantine/core';
-
-import {
-    IconSearch,
-    IconDownload,
-} from '@tabler/icons-react';
-
+import { IconSearch } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 
 import { Header } from '../components/Header';
+import { ApplicationCard } from '../components/ApplicationCard';
+import { api } from '../api/ApiClient';
+import { ApiRequest, ApiQueue, ApiUser, EnrichedRequest } from '../types/requests';
 
-interface HistoryEvent {
-    id: number;
-    person: string;
-    action: string;
-    time: string;
-}
+type FilterStatus = 'waiting' | 'accepted' | 'archived';
 
-interface Application {
-    id: string;
-    title: string;
-    status: 'waiting' | 'accepted' | 'rejected' | 'archived';
-    statusText: string;
-    purpose: string;
-    dateTime: string;
-    hasAttachment?: boolean;
-    history: HistoryEvent[];
-}
+export default function MyApplication() {
+    const [requests, setRequests] = useState<ApiRequest[]>([]);
+    const [queuesMap, setQueuesMap] = useState<Record<string, ApiQueue>>({});
+    const [usersMap, setUsersMap] = useState<Record<string, ApiUser>>({});
 
-function MyApplication() {
+    const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [activeStatus, setActiveStatus] = useState<string | null>('waiting');
-    const [activeTabPerCard, setActiveTabPerCard] = useState<{ [key: string]: 'info' | 'history' }>({});
-    const [comments, setComments] = useState<{ [key: string]: string }>({});
+    const [activeTab, setActiveTab] = useState<FilterStatus>('waiting');
 
-    const applications: Application[] = [
-        {
-            id: '1',
-            title: 'Устройство в штаб',
-            status: 'waiting',
-            statusText: 'В ожидании',
-            purpose:
-                'Проходил стажировку в сентябре, хочу устроиться на постоянку, если есть такая возможность',
-            dateTime: '26/10/2025 14:00 - 16:00',
-            hasAttachment: true,
-            history: [
-                {
-                    id: 1,
-                    person: 'Петров Петр Петрович',
-                    action: 'Добавился в очередь Устройство в штаб',
-                    time: '3 часа назад',
-                },
-                {
-                    id: 2,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Утвердил запись на 14:00 часов',
-                    time: '2 часа назад',
-                },
-                {
-                    id: 3,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Оставил комментарий: возьмите документы с собой',
-                    time: '1 час назад',
-                },
-                {
-                    id: 4,
-                    person: 'Петров Петр Петрович',
-                    action: 'Загрузил дополнительные документы',
-                    time: '30 минут назад',
-                },
-                {
-                    id: 5,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Подтвердил получение документов',
-                    time: '15 минут назад',
-                },
-            ],
-        },
-        {
-            id: '2',
-            title: 'По поводу отпуска',
-            status: 'waiting',
-            statusText: 'В ожидании',
-            purpose: 'Хочу взять отпуск в декабре на две недели',
-            dateTime: '27/10/2025 10:00 - 11:00',
-            hasAttachment: true,
-            history: [
-                {
-                    id: 1,
-                    person: 'Олегов Олег Олегович',
-                    action: 'Добавился в очередь По поводу отпуска',
-                    time: '2 часа назад',
-                },
-                {
-                    id: 2,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Оставил комментарий: возьмите документы с собой',
-                    time: '1 час назад',
-                },
-            ],
-        },
-        {
-            id: '3',
-            title: 'Получение премии',
-            status: 'accepted',
-            statusText: 'Принято',
-            purpose: 'Получить премию за сентябрь, согласовано с руководителем',
-            dateTime: '30/10/2025 15:00 - 15:30',
-            hasAttachment: true,
-            history: [
-                {
-                    id: 1,
-                    person: 'Олегова Екатерина Ильина',
-                    action: 'Добавилась в очередь Получение премии',
-                    time: '1 день назад',
-                },
-                {
-                    id: 2,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Подтвердил выдачу премии',
-                    time: '3 часа назад',
-                },
-            ],
-        },
-        {
-            id: '4',
-            title: 'Перенос отпуска',
-            status: 'rejected',
-            statusText: 'Отклонено',
-            purpose: 'Хотел перенести отпуск на январь, но нет возможности по графику',
-            dateTime: '29/10/2025 11:00 - 11:30',
-            hasAttachment: true,
-            history: [
-                {
-                    id: 1,
-                    person: 'Сидоров Алексей Петрович',
-                    action: 'Подал запрос на перенос отпуска',
-                    time: '5 часов назад',
-                },
-                {
-                    id: 2,
-                    person: 'Иванов Иван Иванович',
-                    action: 'Отклонил запрос из-за загруженности отдела',
-                    time: '2 часа назад',
-                },
-            ],
-        },
-    ];
-
-    const filteredApplications = applications.filter((app) => {
-        if (activeStatus && app.status !== activeStatus) return false;
-        if (search && !app.title.toLowerCase().includes(search.toLowerCase())) return false;
-        return true;
-    });
-
-    const totalApplications = applications.length;
-    const activeApplications = applications.filter(
-        (app) => app.status === 'waiting' || app.status === 'accepted'
-    ).length;
-
-    const getActiveTab = (appId: string) => activeTabPerCard[appId] || 'info';
-    const setActiveTab = (appId: string, tab: 'info' | 'history') => {
-        setActiveTabPerCard({ ...activeTabPerCard, [appId]: tab });
+    const fetchRequests = async () => {
+        try {
+            const data = await api.request<ApiRequest[]>('/api/v1/requests/my', 'GET');
+            setRequests(data);
+            const queueIds = Array.from(new Set(data.map(r => r.queue_id)));
+            const loadedQueues: Record<string, ApiQueue> = {};
+            const queuePromises = queueIds.map(async (qId) => {
+                if (queuesMap[qId]) {
+                    loadedQueues[qId] = queuesMap[qId];
+                    return;
+                }
+                try {
+                    const q = await api.request<ApiQueue>(`/api/v1/queues/${qId}`, 'GET');
+                    loadedQueues[qId] = q;
+                } catch (e) {
+                    console.error(`Failed to load queue ${qId}`, e);
+                }
+            });
+            await Promise.all(queuePromises);
+            setQueuesMap(prev => ({ ...prev, ...loadedQueues }));
+            const ownerIds = Array.from(new Set(Object.values(loadedQueues).map(q => q.owner_id)));
+            const loadedUsers: Record<string, ApiUser> = {};
+            const userPromises = ownerIds.map(async (uId) => {
+                if (usersMap[uId]) {
+                    loadedUsers[uId] = usersMap[uId];
+                    return;
+                }
+                try {
+                    const u = await api.request<ApiUser>(`/api/v1/users/${uId}`, 'GET');
+                    loadedUsers[uId] = u;
+                } catch (e) {
+                    console.error(`Failed to load user ${uId}`, e);
+                }
+            });
+            await Promise.all(userPromises);
+            setUsersMap(prev => ({ ...prev, ...loadedUsers }));
+        } catch (e) {
+            console.error(e);
+            notifications.show({ title: 'Ошибка', message: 'Не удалось загрузить заявки', color: 'red' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const getComment = (appId: string) => comments[appId] || '';
-    const setComment = (appId: string, value: string) => {
-        setComments({ ...comments, [appId]: value });
-    };
+    useEffect(() => {
+        setIsLoading(true);
+        fetchRequests();
+    }, []);
+
+    const filteredRequests = useMemo(() => {
+        return requests.filter(req => {
+            if (search) {
+                const searchLower = search.toLowerCase();
+
+                const purpose = req.purpose?.toLowerCase() || '';
+
+                const queueData = queuesMap[req.queue_id];
+                const queueName = queueData?.name?.toLowerCase() || '';
+                const queueDesc = queueData?.description?.toLowerCase() || '';
+
+                const ownerId = queueData?.owner_id;
+                const ownerData = ownerId ? usersMap[ownerId] : undefined;
+
+                const ownerFirstName = ownerData?.first_name?.toLowerCase() || '';
+                const ownerLastName = ownerData?.last_name?.toLowerCase() || '';
+                const ownerPatronymic = ownerData?.patronymic?.toLowerCase() || '';
+
+                const ownerFullName = `${ownerLastName} ${ownerFirstName} ${ownerPatronymic}`.trim();
+                const matchesSearch =
+                    purpose.includes(searchLower) ||
+                    queueName.includes(searchLower) ||
+                    queueDesc.includes(searchLower) ||
+                    ownerFullName.includes(searchLower);
+
+                if (!matchesSearch) {
+                    return false;
+                }
+            }
+            if (activeTab === 'archived') {
+                return req.is_archived;
+            }
+            if (activeTab === 'waiting') {
+                return req.status === 'pending' && !req.is_archived;
+            }
+            if (activeTab === 'accepted') {
+                return req.status === 'accepted' && !req.is_archived;
+            }
+
+            return false;
+        });
+    }, [requests, search, activeTab, queuesMap, usersMap]);
+
+    const stats = useMemo(() => {
+        return {
+            total: requests.length,
+            active: requests.filter(r => !r.is_archived && (r.status === 'pending' || r.status === 'accepted')).length
+        };
+    }, [requests]);
 
     return (
         <AppShell header={{ height: 70 }} padding="md">
@@ -192,189 +136,56 @@ function MyApplication() {
 
             <AppShell.Main>
                 <Container size="80%" py="md">
-                    <Title order={1} mb="xs">
-                        Мои заявки
-                    </Title>
-                    <Group mb="xs">
-                        <Text size="sm">
-                            Всего заявок: <strong>{totalApplications}</strong>
-                        </Text>
-                        <Text size="sm">
-                            Активных заявок: <strong>{activeApplications}</strong>
-                        </Text>
+                    <Title order={1} mb="lg">Мои заявки</Title>
+
+                    <Group mb="xs" style={{ visibility: isLoading ? 'hidden' : 'visible' }}>
+                        <Text size="sm">Всего заявок: <strong>{stats.total}</strong></Text>
+                        <Text size="sm">Активных заявок: <strong>{stats.active}</strong></Text>
                     </Group>
 
                     <Group mb="lg" justify="space-between">
-                        <Group>
-                            <TextInput
-                                placeholder="Поиск по названию, имени и т.д."
-                                style={{ width: 404 }}
-                                value={search}
-                                onChange={(e) => setSearch(e.currentTarget.value)}
-                            />
-                            <Button>
-                                <IconSearch size={20} />
-                            </Button>
-                        </Group>
+                        <TextInput
+                            placeholder="Поиск..."
+                            style={{ width: 300 }}
+                            value={search}
+                            onChange={(e) => setSearch(e.currentTarget.value)}
+                            leftSection={<IconSearch size={16} />}
+                        />
 
                         <SegmentedControl
-                            value={activeStatus || 'waiting'}
-                            onChange={setActiveStatus}
+                            value={activeTab}
+                            onChange={(val) => setActiveTab(val as FilterStatus)}
                             data={[
                                 { label: 'Ожидание', value: 'waiting' },
                                 { label: 'Принято', value: 'accepted' },
-                                { label: 'Отклонено', value: 'rejected' },
-                                { label: 'Архивировано', value: 'archived' },
+                                { label: 'Архив', value: 'archived' },
                             ]}
                         />
                     </Group>
+
                     <Divider size={2} my="sm" />
-                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
-                        {filteredApplications.map((app) => (
-                            <Card
-                                key={app.id}
-                                shadow="sm"
-                                padding="lg"
-                                radius="md"
-                                withBorder
-                                style={{
-                                    height: 500,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}
-                            >
-                                <Group justify="space-between" mb="sm">
-                                    <Title order={4}>{app.title}</Title>
-                                </Group>
-                                <Group justify="space-between" mb="sm">
-                                    <Badge
-                                        color={
-                                            app.status === 'waiting'
-                                                ? '#C8235A'
-                                                : app.status === 'accepted'
-                                                    ? '#5FBF24'
-                                                    : app.status === 'rejected'
-                                                        ? '#FA5252'
-                                                        : 'gray'
-                                        }
-                                        variant="dot"
-                                    >
-                                        {app.statusText}
-                                    </Badge>
 
-                                    <Group justify="end">
-                                        <SegmentedControl
-                                            value={getActiveTab(app.id)}
-                                            onChange={(val) => setActiveTab(app.id, val as 'info' | 'history')}
-                                            data={[
-                                                { label: 'Информация', value: 'info' },
-                                                { label: 'История', value: 'history' },
-                                            ]}
-                                        />
-                                    </Group>
-                                </Group>
-
-                                <Divider size={2} my="sm" />
-
-                                <ScrollArea
-                                    style={{
-                                        flex: 1,
-                                        minHeight: 0,
+                    {isLoading ? (
+                        <Center h={200}><Loader /></Center>
+                    ) : filteredRequests.length === 0 ? (
+                        <Text c="dimmed" ta="center" mt="xl">Заявок не найдено</Text>
+                    ) : (
+                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                            {filteredRequests.map((req) => (
+                                <ApplicationCard
+                                    key={req.id}
+                                    request={{
+                                        ...req,
+                                        queueData: queuesMap[req.queue_id],
+                                        ownerData: queuesMap[req.queue_id] ? usersMap[queuesMap[req.queue_id].owner_id] : undefined
                                     }}
-                                    type="auto"
-                                >
-                                    <Box pr="xs" pb="xs">
-                                        {getActiveTab(app.id) === 'info' && (
-                                            <Stack gap="md">
-                                                <div>
-                                                    <Text size="sm" mb="xs">
-                                                        <strong>Цель визита:</strong>
-                                                    </Text>
-                                                    <Text size="sm" c="gray.7">
-                                                        {app.purpose}
-                                                    </Text>
-                                                </div>
-
-                                                <div>
-                                                    <Text size="sm">
-                                                        <strong>Дата и время посещения:</strong> {app.dateTime}
-                                                    </Text>
-                                                </div>
-
-                                                {app.hasAttachment && (
-                                                    <Group justify="start" mb="md">
-                                                        <Button
-                                                            variant="filled"
-                                                            leftSection={<IconDownload size={16} />}
-                                                            size="sm"
-                                                        >
-                                                            Скачать приложенный файл
-                                                        </Button>
-                                                    </Group>
-                                                )}
-                                            </Stack>
-                                        )}
-
-                                        {getActiveTab(app.id) === 'history' && (
-                                            <Stack gap="md">
-                                                <Timeline active={app.history.length} bulletSize={20} lineWidth={4}>
-                                                    {app.history.map((item) => (
-                                                        <Timeline.Item
-                                                            key={item.id}
-                                                            title={<Text fw={600}>{item.person}</Text>}
-                                                        >
-                                                            <Text c="dimmed" size="xs" mt={4}>
-                                                                {item.action}
-                                                            </Text>
-                                                            <Text size="xs" mt={4} c="gray.5">
-                                                                {item.time}
-                                                            </Text>
-                                                        </Timeline.Item>
-                                                    ))}
-                                                </Timeline>
-
-                                                <Stack gap="sm" mt="md">
-                                                    <Text size="sm" fw={600}>
-                                                        Комментарий
-                                                    </Text>
-                                                    <Textarea
-                                                        placeholder="Укажите важные детали или пожелания"
-                                                        value={getComment(app.id)}
-                                                        onChange={(e) => setComment(app.id, e.currentTarget.value)}
-                                                        minRows={3}
-                                                        size="sm"
-                                                    />
-                                                </Stack>
-                                            </Stack>
-                                        )}
-                                    </Box>
-                                </ScrollArea>
-
-                                {app.status === 'waiting' && (
-                                    <Group grow mt="md">
-                                        <Button variant="filled" size="sm">
-                                            Изменить заявку
-                                        </Button>
-                                        <Button variant="outline" color="gray" size="sm">
-                                            Отменить заявку
-                                        </Button>
-                                    </Group>
-                                )}
-
-                                {app.status === 'accepted' && (
-                                    <Group justify="end" mb="md">
-                                        <Button variant="outline" color="gray" size="sm" mt="md">
-                                            Отменить заявку
-                                        </Button>
-                                    </Group>
-                                )}
-                            </Card>
-                        ))}
-                    </SimpleGrid>
+                                    onUpdate={fetchRequests}
+                                />
+                            ))}
+                        </SimpleGrid>
+                    )}
                 </Container>
             </AppShell.Main>
         </AppShell>
     );
 }
-
-export default MyApplication;

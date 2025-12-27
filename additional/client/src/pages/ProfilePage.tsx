@@ -32,7 +32,6 @@ export default function ProfilePage() {
             new_email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Некорректный email'),
             current_password: (value) => (value.length < 1 ? 'Введите текущий пароль' : null),
         },
-        // Включаем валидацию при каждом изменении, чтобы кнопка сразу блокировалась/разблокировалась
         validateInputOnChange: true, 
     });
 
@@ -48,7 +47,6 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (user) {
-            // Заполняем профиль только если форма "чистая", чтобы не стирать ввод пользователя
             if (!profileForm.isDirty()) {
                 profileForm.setValues({
                     first_name: user.first_name,
@@ -59,10 +57,9 @@ export default function ProfilePage() {
         }
     }, [user]);
 
-    // --- ОБРАБОТЧИКИ ---
 
     const handleUpdateProfile = async (values: typeof profileForm.values) => {
-        setIsProfileUpdating(true); // Старт загрузки
+        setIsProfileUpdating(true);
         try {
             await api.request('/api/v1/users/name', 'PATCH', {
                 first_name: values.first_name,
@@ -71,7 +68,6 @@ export default function ProfilePage() {
             });
             notifications.show({ title: 'Успех', message: 'Данные обновлены', color: 'green', icon: <IconCheck size={18} /> });
             
-            // Мгновенное обновление контекста
             if (user) {
                 setUser({
                     ...user,
@@ -84,12 +80,12 @@ export default function ProfilePage() {
         } catch (e: any) {
             notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось обновить данные', color: 'red' });
         } finally {
-            setIsProfileUpdating(false); // Конец загрузки
+            setIsProfileUpdating(false);
         }
     };
 
     const handleUpdateEmail = async (values: typeof emailForm.values) => {
-        setIsEmailUpdating(true); // Старт загрузки
+        setIsEmailUpdating(true);
         try {
             await api.request('/api/v1/users/email', 'PATCH', {
                 new_email: values.new_email,
@@ -104,12 +100,12 @@ export default function ProfilePage() {
         } catch (e: any) {
             notifications.show({ title: 'Ошибка', message: e.message || 'Неверный пароль или email занят', color: 'red' });
         } finally {
-            setIsEmailUpdating(false); // Конец загрузки
+            setIsEmailUpdating(false);
         }
     };
 
     const handleUpdatePassword = async (values: typeof passwordForm.values) => {
-        setIsPasswordUpdating(true); // Старт загрузки
+        setIsPasswordUpdating(true);
         try {
             await api.request('/api/v1/users/password', 'PATCH', {
                 old_password: values.current_password,
@@ -120,12 +116,12 @@ export default function ProfilePage() {
         } catch (e: any) {
             notifications.show({ title: 'Ошибка', message: e.message || 'Не удалось изменить пароль', color: 'red' });
         } finally {
-            setIsPasswordUpdating(false); // Конец загрузки
+            setIsPasswordUpdating(false);
         }
     };
 
     const handleConnectTelegram = async () => {
-        setIsTgLoading(true); // Старт загрузки (уже был)
+        setIsTgLoading(true);
         try {
             const res = await api.request<{ link: string }>('/api/v1/users/telegram', 'GET');
             setTgLink(res.link);
@@ -133,7 +129,7 @@ export default function ProfilePage() {
         } catch (e: any) {
             notifications.show({ title: 'Ошибка', message: 'Не удалось получить ссылку Telegram', color: 'red' });
         } finally {
-            setIsTgLoading(false); // Конец загрузки
+            setIsTgLoading(false);
         }
     };
 
@@ -148,15 +144,11 @@ export default function ProfilePage() {
         }
     };
 
-    // --- Вспомогательные функции для проверки валидности ---
-    
-    // Кнопка активна, если поля не пустые И форма валидна (нет ошибок regex и т.д.)
     const isEmailButtonDisabled = 
         !emailForm.values.new_email || 
         !emailForm.values.current_password || 
         !emailForm.isValid();
 
-    // Кнопка активна, если все поля не пустые И форма валидна (пароли совпадают и т.д.)
     const isPasswordButtonDisabled = 
         !passwordForm.values.current_password || 
         !passwordForm.values.new_password || 
@@ -198,7 +190,7 @@ export default function ProfilePage() {
                                     <Group justify="flex-end" mt="auto">
                                         <Button 
                                             type="submit" 
-                                            loading={isProfileUpdating} // Крутилка
+                                            loading={isProfileUpdating}
                                         >
                                             Сохранить
                                         </Button>
@@ -232,8 +224,8 @@ export default function ProfilePage() {
                                     <Group justify="flex-end" mt="md">
                                         <Button 
                                             type="submit" 
-                                            disabled={isEmailButtonDisabled} // Блокировка
-                                            loading={isEmailUpdating} // Крутилка
+                                            disabled={isEmailButtonDisabled}
+                                            loading={isEmailUpdating}
                                         >
                                             Изменить Email
                                         </Button>
@@ -253,8 +245,8 @@ export default function ProfilePage() {
                                     <Group justify="flex-end" mt="auto">
                                         <Button 
                                             type="submit"
-                                            disabled={isPasswordButtonDisabled} // Блокировка
-                                            loading={isPasswordUpdating} // Крутилка
+                                            disabled={isPasswordButtonDisabled}
+                                            loading={isPasswordUpdating}
                                         >
                                             Обновить пароль
                                         </Button>
@@ -283,7 +275,7 @@ export default function ProfilePage() {
                                     <Button
                                         leftSection={<IconBrandTelegram size={18} />}
                                         onClick={handleConnectTelegram}
-                                        loading={isTgLoading} // Крутилка (была, оставили)
+                                        loading={isTgLoading}
                                         variant="outline"
                                         fullWidth
                                     >

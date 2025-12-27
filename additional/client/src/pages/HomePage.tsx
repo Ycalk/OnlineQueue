@@ -116,7 +116,6 @@ function HomePage() {
 
             const createdQueue = await api.request<ApiQueue>('/api/v1/queues', 'POST', data);
 
-            // Оповещаем пользователя
             notifications.show({
                 title: 'Успех',
                 message: 'Очередь успешно создана',
@@ -148,8 +147,13 @@ function HomePage() {
                     <Title order={1} mb="lg">Доступные очереди</Title>
                     <Group mb="lg" justify="space-between">
                         <Group>
-                            <TextInput placeholder="Поиск..." style={{ width: 404 }} value={search} onChange={(e) => setSearch(e.currentTarget.value)} />
-                            <Button><IconSearch size={20} /></Button>
+                            <TextInput
+                                placeholder="Поиск..."
+                                style={{ width: 300 }}
+                                value={search}
+                                onChange={(e) => setSearch(e.currentTarget.value)}
+                                leftSection={<IconSearch size={16} />}
+                            />
                         </Group>
                         <Button leftSection={<IconPlus size={16} />} onClick={handleCreateQueue}>Создать очередь</Button>
                     </Group>
